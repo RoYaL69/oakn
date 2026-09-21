@@ -1,0 +1,24 @@
+apiVersion: quality.chillcode/v1
+
+contract:
+  base: quality-v1
+
+security:
+  baseline: security-v1
+  artifactVersion: '1.2.1'
+
+languages:
+  python: true
+
+roots:
+  python: .
+
+capabilities:
+  typescript: false
+  tests: required
+  build: not-applicable
+  container: false
+
+profile:
+  type: tool
+  risk: standard

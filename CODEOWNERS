@@ -1,0 +1,6 @@
+# Trusted control-plane files require maintainer review.
+/.github/ @RoYaL69
+/scripts/ @RoYaL69
+/src/ @RoYaL69
+/schemas/ @RoYaL69
+/AGENTS.md @RoYaL69

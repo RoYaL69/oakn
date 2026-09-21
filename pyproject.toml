@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "oakn"
+version = "0.1.0"
+description = "Open Agent Knowledge Network MVP"
+requires-python = ">=3.12"
+dependencies = ["defusedxml>=0.7.1", "requests>=2.32.0"]
+license = { text = "Apache-2.0" }
+
+[project.scripts]
+oakn = "oakn.cli:main"
+oakn-mcp = "oakn.mcp:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/oakn"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+explicit_package_bases = true

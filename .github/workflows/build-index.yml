@@ -1,0 +1,34 @@
+name: Build canonical local-search index
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch canonical main revision
+        env:
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git init "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE"
+          git remote add origin "https://github.com/${REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "$SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Build deterministic SQLite FTS5 bundle
+        run: python3 scripts/build_release.py "$GITHUB_WORKSPACE" "$RUNNER_TEMP/release"
+      - name: Publish checksummed release bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: >-
+          gh release create "oakn-index-${SHA}"
+          "$RUNNER_TEMP/release/index.sqlite.gz" "$RUNNER_TEMP/release/manifest.json"
+          --target "$SHA" --title "OAKN index ${SHA}" --notes "Derived from canonical claims at ${SHA}."

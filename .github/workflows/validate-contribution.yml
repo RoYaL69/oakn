@@ -1,0 +1,32 @@
+name: Validate untrusted knowledge contribution
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch trusted validator and untrusted data without executing it
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          git init "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE"
+          git remote add origin "https://github.com/${REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          git checkout --detach FETCH_HEAD
+          git fetch --no-tags --depth=1 origin "$PR_SHA"
+          git worktree add --detach "$RUNNER_TEMP/contribution" FETCH_HEAD
+          git diff --name-status "$BASE_SHA" "$PR_SHA" > "$RUNNER_TEMP/changes.txt"
+      - name: Validate data-only contribution with base-branch code
+        run: >-
+          python3 "$GITHUB_WORKSPACE/scripts/validate_contribution.py"
+          "$RUNNER_TEMP/contribution" --changes "$RUNNER_TEMP/changes.txt"
