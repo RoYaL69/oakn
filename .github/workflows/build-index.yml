@@ -22,6 +22,8 @@ jobs:
           git remote add origin "https://github.com/${REPOSITORY}.git"
           git fetch --no-tags --depth=1 origin "$SHA"
           git checkout --detach FETCH_HEAD
+      - name: Install trusted index-builder dependencies
+        run: python3 -m pip install 'defusedxml==0.7.1' 'requests==2.34.2'
       - name: Build deterministic SQLite FTS5 bundle
         run: python3 scripts/build_release.py "$GITHUB_WORKSPACE" "$RUNNER_TEMP/release"
       - name: Publish checksummed release bundle

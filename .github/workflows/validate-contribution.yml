@@ -26,6 +26,8 @@ jobs:
           git fetch --no-tags --depth=1 origin "$PR_SHA"
           git worktree add --detach "$RUNNER_TEMP/contribution" FETCH_HEAD
           git diff --name-status "$BASE_SHA" "$PR_SHA" > "$RUNNER_TEMP/changes.txt"
+      - name: Install trusted validator dependencies
+        run: python3 -m pip install 'defusedxml==0.7.1' 'requests==2.34.2'
       - name: Validate data-only contribution with base-branch code
         run: >-
           python3 "$GITHUB_WORKSPACE/scripts/validate_contribution.py"
