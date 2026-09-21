@@ -9,7 +9,8 @@
   "summary": "left-pad 1.3.0 adds leading padding until a value reaches the requested width.",
   "conditions": [
     "The package version is exactly 1.3.0.",
-    "The target width is greater than the original value length."
+    "The target width is greater than the original value length.",
+    "The supplied padding character is exactly one character."
   ],
   "evidence": [
     {
