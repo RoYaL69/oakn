@@ -28,6 +28,7 @@ def _fetch(url: str, allow_file_urls: bool = False, redirects: int = 0) -> bytes
         "github.com",
         "objects.githubusercontent.com",
         "github-releases.githubusercontent.com",
+        "release-assets.githubusercontent.com",
     }
     if (
         parsed.scheme != "https"

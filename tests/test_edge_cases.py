@@ -2,8 +2,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from oakn.client import KnowledgeClient
+from oakn.client import KnowledgeClient, _fetch
 from oakn.dependencies import resolve_project
 from oakn.index import IndexError
 from oakn.validation import ValidationError
@@ -35,6 +36,28 @@ class EdgeCaseTests(unittest.TestCase):
             self.assertEqual(resolve_project(gradle)[0]["purl"], "pkg:maven/org.example/demo@3.0.0")
             self.assertEqual(resolve_project(pnpm)[0]["purl"], "pkg:npm/left-pad@1.3.0")
             self.assertEqual(resolve_project(yarn)[0]["purl"], "pkg:npm/left-pad@1.3.0")
+
+    def test_allows_github_release_asset_redirects(self) -> None:
+        class Response:
+            def __init__(
+                self, status_code: int, content: bytes = b"", location: str | None = None
+            ) -> None:
+                self.status_code = status_code
+                self.content = content
+                self.is_redirect = location is not None
+                self.headers = {"Location": location} if location else {}
+
+        with patch(
+            "oakn.client.requests.get",
+            side_effect=[
+                Response(302, location="https://release-assets.githubusercontent.com/download"),
+                Response(200, content=b"bundle"),
+            ],
+        ):
+            self.assertEqual(
+                _fetch("https://github.com/owner/repo/releases/download/tag/manifest.json"),
+                b"bundle",
+            )
 
     def test_rejects_duplicate_claim_and_corrupt_signed_index(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
