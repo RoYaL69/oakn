@@ -35,18 +35,19 @@ both. The package manifest must prove the purl's exact package/version.
 1. Seed the trusted control plane (this repository's code and workflows) on
    `main` once, then protect `main`; untrusted knowledge contributions begin
    only after this bootstrap.
-2. Require the `Validate untrusted knowledge contribution / validate` status
-   check on `main`. For a multi-maintainer repository, also enable required
-   CODEOWNER review; this single-maintainer MVP maps protected paths to
-   `@RoYaL69`.
+2. Require the `validate` status check on `main`. For a multi-maintainer
+   repository, also enable required CODEOWNER review; this single-maintainer MVP
+   maps protected paths to `@RoYaL69`.
 3. Permit Actions to create releases. The trusted `push` workflow publishes a
    compressed index plus manifest to a GitHub Release.
 4. Configure clients with the immutable release `manifest.json` URL and call
    `sync`; its SHA-256 check and SQLite integrity check run before replacement.
 
-`pull_request_target` is deliberate: it checks out the base revision's validator
-and fetches a PR only as data. It has read-only content permission and never
-runs PR scripts or fixtures. The release job executes only merged `main` code.
+`pull_request_target` is deliberate: a data-only contribution is checked with
+base-branch validator code and its files are never executed. A non-data pull
+request is rejected unless its author is the repository owner; that trusted
+control-plane path runs without secrets. The release job executes only merged
+`main` code.
 
 See `docs/architecture.md` for trust decisions and `docs/agent-rule.md` for the
 agent loop.
