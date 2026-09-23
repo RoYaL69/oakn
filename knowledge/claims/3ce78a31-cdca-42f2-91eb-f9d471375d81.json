@@ -2,7 +2,7 @@
   "claim_type": "API_BEHAVIOR",
   "conditions": [
     "The package version is exactly 4.0.0.",
-    "concurrency is a number with a minimum value of 1."
+    "The concurrency argument is a positive integer or positive Infinity."
   ],
   "evidence": [
     {
@@ -14,6 +14,17 @@
         "path": "package.json"
       },
       "path": "readme.md",
+      "repository": "https://github.com/sindresorhus/p-limit"
+    },
+    {
+      "commit_sha": "38a6773e552d24f4c9eb2d79d57b6cff017c587d",
+      "content_sha256": "f80d1e76df221c95ac831ed00ad0aac83496fd0b2bc98d3d0e4296e6e8f6b2e9",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "71b014415b5b254af73a26d5ffdb0757f919587de66b7984567aff2167c1d5d6",
+        "path": "package.json"
+      },
+      "path": "index.js",
       "repository": "https://github.com/sindresorhus/p-limit"
     }
   ],
