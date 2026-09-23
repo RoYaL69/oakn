@@ -8,12 +8,14 @@ The MVP is one Python package with three trust-separated areas:
 - `src/oakn/`: trusted client, validator, index builder and MCP implementation.
 - `.github/`: trusted GitHub enforcement and release automation.
 
-A contribution is accepted only when its changed paths are exactly one new
-`knowledge/claims/<claim-id>.json` file. The local validator and the
-`pull_request_target` GitHub workflow run trusted code from the base branch;
-untrusted contribution files are read as data only. Branch protection and
-CODEOWNERS are documented as required repository settings because GitHub cannot
-make a repository file self-protecting without a protected default branch.
+A knowledge contribution is accepted only when its changed paths are exactly one
+new `knowledge/claims/<claim-id>.json` file. The `pull_request_target` workflow
+runs trusted base-branch code and reads those untrusted data files without
+executing them. Non-data pull requests are rejected unless authored by the
+repository owner and follow the separate no-secrets control-plane path. Branch
+protection and CODEOWNERS are documented as required repository settings because
+GitHub cannot make a repository file self-protecting without a protected default
+branch.
 
 ## Core loop
 
