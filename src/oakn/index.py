@@ -87,6 +87,8 @@ class ClaimIndex:
         connection = self._connect()
         try:
             row = connection.execute("SELECT COUNT(*) FROM claims").fetchone()
+        except sqlite3.DatabaseError as error:
+            raise IndexError("local index is missing OAKN claim data; sync it again") from error
         finally:
             connection.close()
         return int(row[0])
