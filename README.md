@@ -16,7 +16,10 @@ PYTHONPATH=src python3 -m oakn.mcp  # explicit stdio MCP server; no Hermes confi
 
 The MCP exposes `resolve_project`, `search`, `get`, `contribute`, `sync`, and
 `validate_candidate`. It is opt-in and session-local by default; see
-`docs/session-local-mcp.md`.
+`docs/session-local-mcp.md`. For a no-write, reproducible stdio sync-and-search
+run, use `scripts/demo_local_mcp.py`; its explicit repository-local procedure is
+in `skills/oakn-session-local/SKILL.md` and is not installed or auto-loaded by
+Hermes.
 
 ## Canonical data and contribution boundary
 
