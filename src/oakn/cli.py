@@ -26,6 +26,8 @@ def main() -> None:
     sync = subcommands.add_parser("sync")
     sync.add_argument("manifest_url")
     sync.add_argument("--index", type=Path, required=True)
+    metrics = subcommands.add_parser("metrics")
+    metrics.add_argument("--index", type=Path, required=True)
     arguments = parser.parse_args()
     if arguments.command == "resolve-project":
         print(json.dumps(resolve_project(arguments.project), indent=2))
@@ -38,6 +40,8 @@ def main() -> None:
         print(build_bundle(arguments.index, arguments.output))
     elif arguments.command == "sync":
         KnowledgeClient(arguments.index).sync(arguments.manifest_url)
+    elif arguments.command == "metrics":
+        print(json.dumps(KnowledgeClient(arguments.index).metrics(), indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
