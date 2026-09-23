@@ -18,8 +18,16 @@ Read it only by explicit request while operating this checkout.
 
 ## Reproducible retrieval demo
 
+Prepare the project environment once:
+
 ```sh
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src .venv/bin/python scripts/demo_local_mcp.py \
+uv sync --locked
+```
+
+Then run the explicit demo:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src uv run --no-sync python scripts/demo_local_mcp.py \
   --manifest-url "https://github.com/RoYaL69/oakn/releases/download/oakn-index-9dc91061b057f4c9ac076ff0f78db495ccc7d317/manifest.json" \
   --query "promise concurrency limit function" \
   --purl "pkg:npm/p-limit@4.0.0" \
