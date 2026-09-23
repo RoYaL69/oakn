@@ -23,6 +23,42 @@ class McpProtocolTests(unittest.TestCase):
             {"resolve_project", "search", "get", "contribute", "sync", "validate_candidate"},
         )
 
+    def test_contribute_publishes_only_when_draft_mode_is_explicit(self) -> None:
+        class Publisher:
+            def __init__(self) -> None:
+                self.calls: list[tuple[dict, str, str]] = []
+
+            def publish(
+                self, candidate: dict, repository_path: str, github_repository: str
+            ) -> dict[str, str]:
+                self.calls.append((candidate, repository_path, github_repository))
+                return {
+                    "status": "draft_pr_created",
+                    "url": "https://github.com/RoYaL69/oakn/pull/99",
+                    "branch": "oakn/claim",
+                }
+
+        publisher = Publisher()
+        server = create_mcp_server(
+            index_path=Path("/tmp/oakn-index.sqlite"),
+            claims_directory=Path("knowledge/claims"),
+            publisher=publisher,
+        )
+        result = asyncio.run(
+            server.call_tool(
+                "contribute",
+                {
+                    "candidate": {"id": "99999999-9999-4999-8999-999999999999"},
+                    "publish_mode": "draft_pr",
+                    "repository_path": "/tmp/oakn",
+                    "github_repository": "RoYaL69/oakn",
+                },
+            )
+        )
+
+        self.assertEqual(len(publisher.calls), 1)
+        self.assertIn("draft_pr_created", result.content[0].text)
+
     def test_stdio_server_completes_mcp_tool_discovery(self) -> None:
         async def list_tools() -> set[str]:
             parameters = StdioServerParameters(

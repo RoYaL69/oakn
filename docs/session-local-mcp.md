@@ -20,9 +20,10 @@ The server exposes `resolve_project`, `search`, `get`, `validate_candidate`,
 `contribute` and `sync`. Each retrieved result carries the untrusted-reference
 data marker and safety notice.
 
-`contribute` defaults to local validation and staging. It does not create a
-branch, push or pull request implicitly. That publication capability remains a
-separate, explicit future operation.
+`contribute` defaults to local validation and staging. It creates a GitHub draft PR
+only when the caller explicitly sets `publish_mode: "draft_pr"` and supplies both
+an explicit local `repository_path` and matching `github_repository`. Publication
+uses an isolated Git worktree and validates the candidate again before staging.
 
 ## Hermes boundary
 
