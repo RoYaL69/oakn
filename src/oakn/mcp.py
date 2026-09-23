@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.mcpserver import MCPServer
 
 from .client import KnowledgeClient
 from .dependencies import resolve_project
+from .publisher import DraftPullRequestPublisher
 from .validation import ClaimValidator
 
 _SAFETY_NOTICE = (
@@ -49,9 +50,14 @@ def dispatch(
     raise ValueError("unsupported MCP tool")
 
 
-def create_mcp_server(index_path: Path, claims_directory: Path) -> MCPServer:
+def create_mcp_server(
+    index_path: Path,
+    claims_directory: Path,
+    publisher: DraftPullRequestPublisher | None = None,
+) -> MCPServer:
     """Create an opt-in, local stdio MCP server; it changes no Hermes config."""
     client = KnowledgeClient(index_path)
+    draft_publisher = publisher or DraftPullRequestPublisher()
     server = MCPServer(
         name="oakn",
         title="Open Agent Knowledge Network",
@@ -86,10 +92,22 @@ def create_mcp_server(index_path: Path, claims_directory: Path) -> MCPServer:
         ClaimValidator().validate(candidate)
         return _response({"status": "valid"})
 
-    @server.tool(name="contribute", description="Validate and stage a claim without publishing it.")
-    def contribute_tool(candidate: dict[str, Any]) -> dict[str, Any]:
-        path = client.contribute(candidate, claims_directory)
-        return _response({"status": "staged", "path": str(path)})
+    @server.tool(
+        name="contribute",
+        description="Validate and stage a claim, or create a draft PR only when draft_pr mode is explicit.",
+    )
+    def contribute_tool(
+        candidate: dict[str, Any],
+        publish_mode: Literal["stage", "draft_pr"] = "stage",
+        repository_path: str | None = None,
+        github_repository: str | None = None,
+    ) -> dict[str, Any]:
+        if publish_mode == "stage":
+            path = client.contribute(candidate, claims_directory)
+            return _response({"status": "staged", "path": str(path)})
+        if not repository_path or not github_repository:
+            raise ValueError("draft_pr requires explicit repository_path and github_repository")
+        return _response(draft_publisher.publish(candidate, repository_path, github_repository))
 
     @server.tool(
         name="sync",
