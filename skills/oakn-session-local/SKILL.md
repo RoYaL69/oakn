@@ -28,4 +28,6 @@ PYTHONPATH=src .venv/bin/python scripts/demo_local_mcp.py \
   --expect-claim-id "3ce78a31-cdca-42f2-91eb-f9d471375d81"
 ```
 
-The command creates only a project-local `.oakn/demo-index.sqlite`, which is ignored by Git. It makes no Hermes configuration or GitHub write.
+The command creates only ignored, project-local `.oakn/` retrieval artifacts (the
+SQLite index and its metrics file). It makes no Hermes configuration or GitHub
+write.
