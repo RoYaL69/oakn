@@ -72,6 +72,17 @@ class DraftPullRequestPublisher:
         )
         if remote != github_repository:
             raise PublicationError("local origin does not match the explicit GitHub repository")
+        push_remotes = [
+            _github_repository(value)
+            for value in self._runner(
+                ["git", "remote", "get-url", "--push", "--all", "origin"], repository
+            ).splitlines()
+            if value.strip()
+        ]
+        if not push_remotes or any(remote != github_repository for remote in push_remotes):
+            raise PublicationError(
+                "effective origin push URL does not match the explicit GitHub repository"
+            )
         claim_id = candidate.get("id")
         if not isinstance(claim_id, str) or not re.fullmatch(r"[0-9a-f-]{36}", claim_id):
             raise PublicationError("candidate id must be a UUID before publication")
