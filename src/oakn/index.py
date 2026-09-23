@@ -82,6 +82,17 @@ class ClaimIndex:
             raise IndexError("local index integrity check failed; sync it again")
         return connection
 
+    def count(self) -> int:
+        """Return the number of claims in the verified local index."""
+        connection = self._connect()
+        try:
+            row = connection.execute("SELECT COUNT(*) FROM claims").fetchone()
+        except sqlite3.DatabaseError as error:
+            raise IndexError("local index is missing OAKN claim data; sync it again") from error
+        finally:
+            connection.close()
+        return int(row[0])
+
     def search(
         self,
         query: str,

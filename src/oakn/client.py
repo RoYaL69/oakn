@@ -102,6 +102,44 @@ class KnowledgeClient:
         self._save_metrics(metrics)
         return dict(metrics)
 
+    def metrics(self) -> dict[str, Any]:
+        """Return local, derived effectiveness metrics without any network access."""
+        recorded = self._metrics()
+        searches = int(recorded["search_count"])
+        hits = int(recorded["knowledge_hits"])
+        misses = int(recorded["true_misses"])
+        contribution_candidates = int(recorded["contribution_candidates"])
+        contributions = int(recorded["contribution_count"])
+        index_size = self.index_path.stat().st_size if self.index_path.exists() else 0
+        claim_count = ClaimIndex(self.index_path).count() if self.index_path.exists() else 0
+
+        def ratio(numerator: int, denominator: int) -> float | None:
+            return round(numerator / denominator, 4) if denominator else None
+
+        return {
+            "search_count": searches,
+            "knowledge_hits": hits,
+            "true_misses": misses,
+            "knowledge_hit_rate": ratio(hits, searches),
+            "true_miss_rate": ratio(misses, searches),
+            "retrieval_precision": None,
+            "retrieval_precision_feedback_count": 0,
+            "average_retrieval_latency_ms": ratio(int(recorded["retrieval_latency_ms"]), searches),
+            "contribution_count": contributions,
+            "duplicate_candidate_count": int(recorded["duplicate_candidate_count"]),
+            "duplicate_candidate_rate": ratio(
+                int(recorded["duplicate_candidate_count"]), contribution_candidates
+            ),
+            "estimated_contribution_cost_units": ratio(
+                int(recorded["contribution_tokens"]), contributions
+            ),
+            "retrieval_tokens": int(recorded["retrieval_tokens"]),
+            "contribution_tokens": int(recorded["contribution_tokens"]),
+            "estimated_research_tokens_avoided": int(recorded["research_tokens_avoided"]),
+            "index_size_bytes": index_size,
+            "claim_count": claim_count,
+        }
+
     def _index(self) -> ClaimIndex:
         return ClaimIndex(self.index_path)
 
@@ -126,8 +164,6 @@ class KnowledgeClient:
                 search_count=1,
                 knowledge_hits=1,
                 retrieval_latency_ms=elapsed_ms,
-                retrieval_precision_numerator=1,
-                retrieval_precision_denominator=1,
                 retrieval_tokens=1,
                 research_tokens_avoided=1,
             )
@@ -141,7 +177,6 @@ class KnowledgeClient:
             search_count=1,
             true_misses=1,
             retrieval_latency_ms=elapsed_ms,
-            retrieval_precision_denominator=1,
             retrieval_tokens=1,
         )
         return {
@@ -168,6 +203,7 @@ class KnowledgeClient:
         """Validate and stage exactly one public claim in canonical data storage."""
         validator = ClaimValidator(fetch=fetch)
         validator.validate(candidate)
+        self._record(contribution_candidates=1)
         claims = Path(claims_directory)
         claims.mkdir(parents=True, exist_ok=True)
         self._reject_duplicate(candidate, claims)
