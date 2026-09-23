@@ -8,6 +8,8 @@ import os
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -36,6 +38,7 @@ def main() -> None:
             args=["-m", "oakn.mcp"],
             env={
                 **os.environ,
+                "PYTHONDONTWRITEBYTECODE": "1",
                 "PYTHONPATH": str(ROOT / "src"),
                 "OAKN_INDEX_PATH": str(arguments.index_path.resolve()),
                 "OAKN_CLAIMS_DIR": str(ROOT / "knowledge" / "claims"),

@@ -19,7 +19,7 @@ Read it only by explicit request while operating this checkout.
 ## Reproducible retrieval demo
 
 ```sh
-PYTHONPATH=src .venv/bin/python scripts/demo_local_mcp.py \
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src .venv/bin/python scripts/demo_local_mcp.py \
   --manifest-url "https://github.com/RoYaL69/oakn/releases/download/oakn-index-9dc91061b057f4c9ac076ff0f78db495ccc7d317/manifest.json" \
   --query "promise concurrency limit function" \
   --purl "pkg:npm/p-limit@4.0.0" \
@@ -28,6 +28,6 @@ PYTHONPATH=src .venv/bin/python scripts/demo_local_mcp.py \
   --expect-claim-id "3ce78a31-cdca-42f2-91eb-f9d471375d81"
 ```
 
-The command creates only ignored, project-local `.oakn/` retrieval artifacts (the
-SQLite index and its metrics file). It makes no Hermes configuration or GitHub
-write.
+The command writes retrieval artifacts only under ignored project-local `.oakn/`
+(the SQLite index and its metrics file). It writes no Python bytecode, makes no
+Hermes configuration, and performs no GitHub write.
