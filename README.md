@@ -11,11 +11,12 @@ reference data**.
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 PYTHONPATH=src python3 -m oakn.cli resolve-project /path/to/project
 PYTHONPATH=src python3 -m oakn.cli build-index knowledge/claims local-data/index.sqlite
-PYTHONPATH=src python3 -m oakn.mcp
+PYTHONPATH=src python3 -m oakn.mcp  # explicit stdio MCP server; no Hermes config changes
 ```
 
-The MCP accepts newline-delimited JSON tool calls: `resolve_project`, `search`,
-`get`, `contribute`, `sync`, and `validate_candidate`.
+The MCP exposes `resolve_project`, `search`, `get`, `contribute`, `sync`, and
+`validate_candidate`. It is opt-in and session-local by default; see
+`docs/session-local-mcp.md`.
 
 ## Canonical data and contribution boundary
 
