@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -13,6 +14,12 @@ class DependencyResolutionError(ValueError):
 
 def _dependency(purl: str, version: str) -> dict[str, str]:
     return {"purl": purl, "version": version}
+
+
+def _is_exact_version(version: str) -> bool:
+    return bool(version) and not any(
+        token in version for token in ("$", "*", "+", "[", "]", "(", ")")
+    )
 
 
 def _npm_dependencies(project: Path) -> list[dict[str, str]]:
@@ -60,7 +67,7 @@ def _maven_dependencies(project: Path) -> list[dict[str, str]]:
         version = dependency.findtext("m:version", namespaces=namespace)
         if version and version.startswith("${") and version.endswith("}"):
             version = properties.get(version[2:-1])
-        if group and artifact and version:
+        if group and artifact and version and _is_exact_version(version):
             dependencies.append(_dependency(f"pkg:maven/{group}/{artifact}@{version}", version))
     return sorted(dependencies, key=lambda item: item["purl"])
 
@@ -75,16 +82,54 @@ def _gradle_dependencies(project: Path) -> list[dict[str, str]]:
     return [
         _dependency(f"pkg:maven/{group}/{artifact}@{version}", version)
         for group, artifact, version in sorted(set(matches))
+        if _is_exact_version(version)
     ]
 
 
+_IGNORED_PROJECT_DIRECTORIES = {
+    ".git",
+    ".venv",
+    "build",
+    "coverage",
+    "dist",
+    "node_modules",
+    "target",
+    "venv",
+}
+
+
+def _project_dependencies(project: Path) -> list[dict[str, str]] | None:
+    if (project / "package.json").exists():
+        return _npm_dependencies(project)
+    if (project / "pom.xml").exists():
+        return _maven_dependencies(project)
+    if (project / "build.gradle").exists() or (project / "build.gradle.kts").exists():
+        return _gradle_dependencies(project)
+    return None
+
+
+def _nested_project_roots(root: Path) -> list[Path]:
+    manifests = {"package.json", "pom.xml", "build.gradle", "build.gradle.kts"}
+    candidates: set[Path] = set()
+    for directory, subdirectories, files in os.walk(root):
+        subdirectories[:] = [
+            name for name in subdirectories if name not in _IGNORED_PROJECT_DIRECTORIES
+        ]
+        if manifests.intersection(files):
+            candidates.add(Path(directory))
+    return sorted(candidates)
+
+
 def resolve_project(project: str | Path) -> list[dict[str, str]]:
-    """Resolve direct dependencies with a lockfile/manifest exact version."""
+    """Resolve exact dependencies, including nested supported projects when needed."""
     root = Path(project)
-    if (root / "package.json").exists():
-        return _npm_dependencies(root)
-    if (root / "pom.xml").exists():
-        return _maven_dependencies(root)
-    if (root / "build.gradle").exists() or (root / "build.gradle.kts").exists():
-        return _gradle_dependencies(root)
+    direct = _project_dependencies(root)
+    if direct is not None:
+        return direct
+    dependencies: dict[str, dict[str, str]] = {}
+    for nested_project in _nested_project_roots(root):
+        for dependency in _project_dependencies(nested_project) or []:
+            dependencies[dependency["purl"]] = dependency
+    if dependencies:
+        return [dependencies[purl] for purl in sorted(dependencies)]
     raise DependencyResolutionError("supported manifest not found")
