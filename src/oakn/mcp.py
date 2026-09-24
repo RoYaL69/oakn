@@ -47,6 +47,9 @@ def dispatch(
     if tool == "validate_candidate":
         ClaimValidator().validate(request["candidate"])
         return _response({"status": "valid"})
+    if tool == "record_outcome":
+        metrics = client.record_outcome(request["claim_id"], request["accepted"])
+        return _response({"status": "recorded", "metrics": metrics})
     raise ValueError("unsupported MCP tool")
 
 
@@ -108,6 +111,14 @@ def create_mcp_server(
         if not repository_path or not github_repository:
             raise ValueError("draft_pr requires explicit repository_path and github_repository")
         return _response(draft_publisher.publish(candidate, repository_path, github_repository))
+
+    @server.tool(
+        name="record_outcome",
+        description="Record whether an indexed claim was accepted or rejected for this local session.",
+    )
+    def record_outcome_tool(claim_id: str, accepted: bool) -> dict[str, Any]:
+        metrics = client.record_outcome(claim_id, accepted)
+        return _response({"status": "recorded", "metrics": metrics})
 
     @server.tool(
         name="sync",

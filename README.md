@@ -12,11 +12,14 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 PYTHONPATH=src python3 -m oakn.cli resolve-project /path/to/project
 PYTHONPATH=src python3 -m oakn.cli build-index knowledge/claims local-data/index.sqlite
 PYTHONPATH=src python3 -m oakn.cli metrics --index local-data/index.sqlite
+PYTHONPATH=src python3 -m oakn.cli record-outcome <claim-id> --index local-data/index.sqlite --accepted
 PYTHONPATH=src python3 -m oakn.mcp  # explicit stdio MCP server; no Hermes config changes
 ```
 
-The MCP exposes `resolve_project`, `search`, `get`, `contribute`, `sync`, and
-`validate_candidate`. It is opt-in and session-local by default; see
+The MCP exposes `resolve_project`, `search`, `get`, `contribute`, `record_outcome`,
+`sync`, and `validate_candidate`. `record_outcome` records an explicit accepted or
+rejected applicability outcome only in local metrics; it never alters a claim or
+contacts GitHub. It is opt-in and session-local by default; see
 `docs/session-local-mcp.md`. For a reproducible stdio sync-and-search run with no
 Hermes configuration or GitHub writes, use `scripts/demo_local_mcp.py`; its
 explicit repository-local procedure is in `skills/oakn-session-local/SKILL.md`
