@@ -17,8 +17,10 @@ PYTHONPATH=src .venv/bin/python -m oakn.mcp
 ```
 
 The server exposes `resolve_project`, `search`, `get`, `validate_candidate`,
-`contribute` and `sync`. Each retrieved result carries the untrusted-reference
-data marker and safety notice.
+`contribute`, `record_outcome` and `sync`. Each retrieved result carries the
+untrusted-reference data marker and safety notice. `record_outcome` records an
+explicit accepted or rejected applicability outcome only in the local metrics
+sidecar; it never changes a claim or contacts GitHub.
 
 `contribute` defaults to local validation and staging. It creates a GitHub draft PR
 only when the caller explicitly sets `publish_mode: "draft_pr"` and supplies both
@@ -34,5 +36,20 @@ session. The supported session-only test is the stdio protocol test in
 `tests/test_mcp_protocol.py` or a manually launched local MCP client.
 
 When the experiment is ready for a deliberate opt-in, use a separate temporary
-Hermes profile or config directory, register this exact stdio command there,
-start a new session, and remove that profile/config after the experiment.
+Hermes profile, register this exact stdio command there, start a new session,
+and delete the profile after the test:
+
+```sh
+hermes profile create oaknoptin --no-alias --no-skills \
+  --description "Temporary local OAKN MCP experiment"
+printf 'Y\n' | hermes -p oaknoptin mcp add oakn-local \
+  --command "$PWD/.venv/bin/python" \
+  --env "PYTHONPATH=$PWD/src" "OAKN_INDEX_PATH=$PWD/.oakn/hermes-optin.sqlite" \
+        "OAKN_CLAIMS_DIR=$PWD/knowledge/claims" "PYTHONDONTWRITEBYTECODE=1" \
+  --args -m oakn.mcp
+hermes -p oaknoptin mcp test oakn-local
+# Start a new session with the temporary profile, then remove it after the test.
+hermes profile delete -y oaknoptin
+```
+
+This never modifies the default profile or its MCP configuration.
