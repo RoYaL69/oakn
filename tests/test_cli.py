@@ -53,6 +53,38 @@ class CliTests(unittest.TestCase):
         self.assertEqual(metrics["accepted_outcome_count"], 1)
         self.assertEqual(metrics["retrieval_precision"], 1.0)
 
+    def test_record_outcome_rejects_unknown_claim_without_creating_metrics(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            claims = root / "knowledge" / "claims"
+            claims.mkdir(parents=True)
+            index = root / "index.sqlite"
+            build_index(claims, index)
+            error = io.StringIO()
+
+            with (
+                patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "oakn",
+                        "record-outcome",
+                        "33333333-3333-4333-8333-333333333333",
+                        "--index",
+                        str(index),
+                        "--accepted",
+                    ],
+                ),
+                contextlib.redirect_stderr(error),
+                self.assertRaises(SystemExit) as raised,
+            ):
+                main()
+
+        self.assertEqual(raised.exception.code, 2)
+        self.assertIn("outcome feedback requires an indexed claim", error.getvalue())
+        self.assertNotIn("Traceback", error.getvalue())
+        self.assertFalse(index.with_suffix(".metrics.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

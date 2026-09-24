@@ -49,9 +49,12 @@ def main() -> None:
     elif arguments.command == "metrics":
         print(json.dumps(KnowledgeClient(arguments.index).metrics(), indent=2, sort_keys=True))
     elif arguments.command == "record-outcome":
-        outcome_metrics = KnowledgeClient(arguments.index).record_outcome(
-            arguments.claim_id, accepted=arguments.accepted
-        )
+        try:
+            outcome_metrics = KnowledgeClient(arguments.index).record_outcome(
+                arguments.claim_id, accepted=arguments.accepted
+            )
+        except ValueError as error:
+            parser.error(str(error))
         print(json.dumps(outcome_metrics, indent=2, sort_keys=True))
 
 
