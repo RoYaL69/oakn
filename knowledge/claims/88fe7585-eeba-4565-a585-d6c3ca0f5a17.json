@@ -1,0 +1,48 @@
+{
+  "claim_type": "CONFIGURATION",
+  "conditions": [
+    "The package version is exactly 0.47.0.",
+    "markdownlint-cli is invoked with a valid YAML configuration file."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "76b3d32d3f4b965e1d6425253c59407420ae2c43",
+      "content_sha256": "921634c507c6812ad456a97527a9c46c4c93a877ca46490047717a4656b5425c",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "21280478d4322f01e1e59b802a663b2d0c2a5d6ef26c76a6ce3e3c025d4703ec",
+        "path": "package.json"
+      },
+      "path": "README.md",
+      "repository": "https://github.com/igorshubovych/markdownlint-cli"
+    }
+  ],
+  "id": "88fe7585-eeba-4565-a585-d6c3ca0f5a17",
+  "license": {
+    "source_license": "MIT",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-24",
+    "state": "active"
+  },
+  "package": {
+    "purl": "pkg:npm/markdownlint-cli@0.47.0",
+    "version": "0.47.0"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-24",
+    "source_authority": "maintainer",
+    "source_url": "https://github.com/igorshubovych/markdownlint-cli/blob/76b3d32d3f4b965e1d6425253c59407420ae2c43/README.md"
+  },
+  "schema_version": 1,
+  "summary": "markdownlint-cli 0.47.0 accepts YAML configuration through --config, and the configuration can define rule behavior.",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
