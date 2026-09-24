@@ -110,6 +110,9 @@ class KnowledgeClient:
         misses = int(recorded["true_misses"])
         contribution_candidates = int(recorded["contribution_candidates"])
         contributions = int(recorded["contribution_count"])
+        accepted_outcomes = int(recorded["accepted_outcome_count"])
+        rejected_outcomes = int(recorded["rejected_outcome_count"])
+        feedback_count = accepted_outcomes + rejected_outcomes
         index_size = self.index_path.stat().st_size if self.index_path.exists() else 0
         claim_count = ClaimIndex(self.index_path).count() if self.index_path.exists() else 0
 
@@ -122,8 +125,10 @@ class KnowledgeClient:
             "true_misses": misses,
             "knowledge_hit_rate": ratio(hits, searches),
             "true_miss_rate": ratio(misses, searches),
-            "retrieval_precision": None,
-            "retrieval_precision_feedback_count": 0,
+            "retrieval_precision": ratio(accepted_outcomes, feedback_count),
+            "retrieval_precision_feedback_count": feedback_count,
+            "accepted_outcome_count": accepted_outcomes,
+            "rejected_outcome_count": rejected_outcomes,
             "average_retrieval_latency_ms": ratio(int(recorded["retrieval_latency_ms"]), searches),
             "contribution_count": contributions,
             "duplicate_candidate_count": int(recorded["duplicate_candidate_count"]),
@@ -139,6 +144,15 @@ class KnowledgeClient:
             "index_size_bytes": index_size,
             "claim_count": claim_count,
         }
+
+    def record_outcome(self, claim_id: str, accepted: bool) -> dict[str, Any]:
+        """Record explicit local applicability feedback for one indexed claim."""
+        if not self.index_path.exists() or self._index().get(claim_id) is None:
+            raise ValueError("outcome feedback requires an indexed claim")
+        self._record(
+            **({"accepted_outcome_count": 1} if accepted else {"rejected_outcome_count": 1})
+        )
+        return self.metrics()
 
     def _index(self) -> ClaimIndex:
         return ClaimIndex(self.index_path)

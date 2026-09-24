@@ -20,7 +20,15 @@ class McpProtocolTests(unittest.TestCase):
 
         self.assertEqual(
             {tool.name for tool in tools},
-            {"resolve_project", "search", "get", "contribute", "sync", "validate_candidate"},
+            {
+                "resolve_project",
+                "search",
+                "get",
+                "contribute",
+                "sync",
+                "validate_candidate",
+                "record_outcome",
+            },
         )
 
     def test_contribute_publishes_only_when_draft_mode_is_explicit(self) -> None:
