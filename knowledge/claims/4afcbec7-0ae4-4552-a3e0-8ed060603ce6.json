@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "id": "4afcbec7-0ae4-4552-a3e0-8ed060603ce6",
+  "package": {
+    "purl": "pkg:npm/js-yaml@4.3.1",
+    "version": "4.3.1"
+  },
+  "claim_type": "DOCUMENTED_BUG",
+  "summary": "js-yaml 4.3.1 can consume prolonged CPU when parsing YAML that repeatedly merges a sequence of empty mappings because maxTotalMergeKeys does not count those mappings.",
+  "conditions": [
+    "The package version is exactly 4.3.1.",
+    "Untrusted YAML repeatedly merges a sequence of empty mappings during parsing."
+  ],
+  "evidence": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/nodeca/js-yaml",
+      "commit_sha": "86e91b815b8794c3c73a179c1770871e37ec2df8",
+      "path": "lib/loader.js",
+      "content_sha256": "8b6c0d49b3cf2f3e423242b3edf4187a69aa8e35c44aa8d716af500edc6914e6",
+      "package_manifest": {
+        "path": "package.json",
+        "content_sha256": "82b932c87c5da7901c6a8f984698c57912570146fffd3156dcdc96a6c210d847"
+      }
+    }
+  ],
+  "provenance": {
+    "source_url": "https://github.com/github/advisory-database/blob/637938e2d1e00067fc73cd0c55d21f0eadbdec60/advisories/github-reviewed/2026/09/GHSA-2883-xcg3-v3hh/GHSA-2883-xcg3-v3hh.json",
+    "source_commit_sha": "637938e2d1e00067fc73cd0c55d21f0eadbdec60",
+    "source_path": "advisories/github-reviewed/2026/09/GHSA-2883-xcg3-v3hh/GHSA-2883-xcg3-v3hh.json",
+    "source_content_sha256": "70691d56740960d248b0b83091fbd303b0ae3c38a79dc0f8c1ba1c4d94b14944",
+    "retrieved_at": "2026-09-25",
+    "source_authority": "official"
+  },
+  "verification": {
+    "source_binding": "verified",
+    "source_authority": "asserted",
+    "semantic_support": "asserted",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "contradictions": "none_known"
+  },
+  "license": {
+    "source_license": "MIT",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "state": "active",
+    "created_at": "2026-09-25"
+  }
+}
