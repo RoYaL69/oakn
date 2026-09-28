@@ -2,7 +2,7 @@ import hashlib
 import unittest
 from datetime import date
 
-from oakn.validation import ClaimValidator, ValidationError, _network_fetch
+from oakn.validation import ClaimValidator, ValidationError, _manifest_matches, _network_fetch
 
 
 class ClaimValidationTests(unittest.TestCase):
@@ -273,6 +273,34 @@ class ClaimValidationTests(unittest.TestCase):
             _network_fetch(
                 "https://proxy.golang.org/does-not-exist-xyz/@v/v0.0.0-does-not-exist.info"
             )
+
+    def test_maven_manifest_inherits_groupid_and_version_from_parent(self) -> None:
+        # Regression test found while contributing an Apache Commons Text
+        # claim: a large fraction of real-world Maven modules (this one
+        # included, plus e.g. Google Guava) declare <groupId> and/or
+        # <version> ONLY on the <parent> element and omit them at the
+        # top level, relying on Maven's own inheritance to resolve the
+        # effective coordinates. The original _manifest_matches only ever
+        # looked at direct project children, so it silently rejected every
+        # claim against a pom.xml using this extremely common idiom.
+        pom = b"""<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <parent>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-parent</artifactId>
+    <version>54</version>
+  </parent>
+  <artifactId>commons-text</artifactId>
+  <version>1.10.0</version>
+</project>
+"""
+        self.assertTrue(
+            _manifest_matches("maven", "org.apache.commons/commons-text", "1.10.0", pom)
+        )
+        self.assertFalse(
+            _manifest_matches("maven", "org.apache.commons/commons-text", "1.9.0", pom)
+        )
+        self.assertFalse(_manifest_matches("maven", "org.apache.commons/other", "1.10.0", pom))
 
 
 if __name__ == "__main__":
