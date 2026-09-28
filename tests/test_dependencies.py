@@ -52,6 +52,26 @@ class DependencyResolutionTests(unittest.TestCase):
 
         self.assertEqual(dependencies, [{"purl": "pkg:pypi/requests@2.32.3", "version": "2.32.3"}])
 
+    def test_resolves_go_dependency_from_go_mod_require_block(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / "go.mod").write_text(
+                "module example.com/demo\n\ngo 1.22\n\nrequire (\n"
+                "\tgithub.com/pkg/errors v0.9.1\n"
+                "\tgolang.org/x/sync v0.8.0 // indirect\n"
+                ")\n"
+            )
+
+            dependencies = resolve_project(project)
+
+        self.assertEqual(
+            dependencies,
+            [
+                {"purl": "pkg:golang/github.com/pkg/errors@v0.9.1", "version": "v0.9.1"},
+                {"purl": "pkg:golang/golang.org/x/sync@v0.8.0", "version": "v0.8.0"},
+            ],
+        )
+
     def test_discovers_a_nested_supported_project_when_the_repository_root_has_no_manifest(
         self,
     ) -> None:

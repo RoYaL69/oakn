@@ -132,6 +132,38 @@ def _pypi_dependencies(project: Path) -> list[dict[str, str]]:
     return [resolved[name] for name in sorted(resolved)]
 
 
+_GO_REQUIRE_LINE = re.compile(r"^\s*([^\s]+)\s+(v[0-9][^\s]*)\s*(?://.*)?$")
+
+
+def _go_dependencies(project: Path) -> list[dict[str, str]]:
+    content = (project / "go.mod").read_text()
+    in_require_block = False
+    resolved: dict[str, dict[str, str]] = {}
+    for raw_line in content.splitlines():
+        line = raw_line.split("//", 1)[0].strip()
+        if not line:
+            continue
+        if line == "require (":
+            in_require_block = True
+            continue
+        if in_require_block and line == ")":
+            in_require_block = False
+            continue
+        if in_require_block:
+            match = _GO_REQUIRE_LINE.match(line)
+        elif line.startswith("require "):
+            match = _GO_REQUIRE_LINE.match(line.removeprefix("require ").strip())
+        else:
+            match = None
+        if not match:
+            continue
+        module_path, version = match.group(1), match.group(2)
+        resolved.setdefault(
+            module_path, _dependency(f"pkg:golang/{module_path}@{version}", version)
+        )
+    return [resolved[name] for name in sorted(resolved)]
+
+
 _IGNORED_PROJECT_DIRECTORIES = {
     ".git",
     ".venv",
@@ -155,6 +187,8 @@ def _project_dependencies(project: Path) -> list[dict[str, str]] | None:
         return _cargo_dependencies(project)
     if (project / "requirements.txt").exists():
         return _pypi_dependencies(project)
+    if (project / "go.mod").exists():
+        return _go_dependencies(project)
     return None
 
 
@@ -166,6 +200,7 @@ def _nested_project_roots(root: Path) -> list[Path]:
         "build.gradle.kts",
         "Cargo.toml",
         "requirements.txt",
+        "go.mod",
     }
     candidates: set[Path] = set()
     for directory, subdirectories, files in os.walk(root):

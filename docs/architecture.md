@@ -39,6 +39,14 @@ branch.
 - Git evidence binds repository URL, immutable commit SHA, source path, content
   hash and package manifest hash. A network verifier fetches immutable GitHub raw
   URLs and checks the target package name/version from its manifest.
+- For `pkg:golang/...` claims specifically: `go.mod` carries no version field
+  (only the module path), so the package manifest alone cannot bind an exact
+  version the way `package.json`/`pom.xml`/`Cargo.toml`/`pyproject.toml` do for
+  the other ecosystems. The claimed version is verified independently against
+  the public Go module proxy (`proxy.golang.org`'s checksum-addressed
+  `@v/<version>.info` endpoint, part of the standard GOPROXY protocol) rather
+  than trusted from the claim author's assertion. This is the one ecosystem
+  where evidence verification reaches a second allowlisted host beyond GitHub.
 - Source binding, authority, semantic support, executable verification,
   freshness and contradictions are independent states; no aggregate trust score
   exists.
