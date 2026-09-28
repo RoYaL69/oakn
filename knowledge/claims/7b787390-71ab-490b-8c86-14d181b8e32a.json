@@ -1,0 +1,48 @@
+{
+  "claim_type": "DOCUMENTED_BUG",
+  "conditions": [
+    "The package version is exactly 1.15.1.",
+    "This is a fix-version claim: the described FormData duck-typing header-injection issue affects the 1.x line before 1.15.1, and is not present starting with this version."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "ac42446be51300fe214ba3c6e40cc95f34fd6871",
+      "content_sha256": "d348e028e0ed4e736824ed1bebe00e75569eef8356c3c228c6625ef60297adf1",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "9c1afed83b435ca2bb01bbacd17678c425f9715b1569903c9b3546cdd2166548",
+        "path": "package.json"
+      },
+      "path": "lib/adapters/http.js",
+      "repository": "https://github.com/axios/axios"
+    }
+  ],
+  "id": "7b787390-71ab-490b-8c86-14d181b8e32a",
+  "license": {
+    "source_license": "MIT",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-28",
+    "state": "active"
+  },
+  "package": {
+    "purl": "pkg:npm/axios@1.15.1",
+    "version": "1.15.1"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-28",
+    "source_authority": "official",
+    "source_url": "https://github.com/advisories/GHSA-6chq-wfr3-2hj9"
+  },
+  "schema_version": 1,
+  "summary": "axios >=1.0.0, <1.15.1 (and <=0.31.0 on 0.x) has header injection via prototype pollution (CVE-2026-42035, GHSA-6chq-wfr3-2hj9). lib/adapters/http.js duck-typed FormData via isFormData(data) && isFunction(data.getHeaders); if Object.prototype is polluted with getHeaders/append/pipe/on/once/Symbol.toStringTag, a plain object is misidentified as FormData and the attacker's getHeaders() is merged into outgoing request headers. Fixed in 1.15.1 via an own-property check.",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
