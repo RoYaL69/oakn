@@ -1,0 +1,48 @@
+{
+  "claim_type": "DOCUMENTED_BUG",
+  "conditions": [
+    "The package version is exactly 4.18.0.",
+    "This is a fix-version claim: the described array-path-bypass affects lodash <= 4.17.23, and is not present starting with this version."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "59be2de61f8aa9461c7856533b51d31b7d8babc4",
+      "content_sha256": "5009c4c4d2bdbeb10b1c89bac5657beee324a0fb5e3de36ce2aefbac5bb5666f",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "05e923aa3c1bb782e3068afee570b083db7da9c8dbe630e41dbaf621044eeef3",
+        "path": "package.json"
+      },
+      "path": "lodash.js",
+      "repository": "https://github.com/lodash/lodash"
+    }
+  ],
+  "id": "dbaf9b2f-9575-4107-9491-07dbd6d129dc",
+  "license": {
+    "source_license": "MIT",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-28",
+    "state": "active"
+  },
+  "package": {
+    "purl": "pkg:npm/lodash@4.18.0",
+    "version": "4.18.0"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-28",
+    "source_authority": "official",
+    "source_url": "https://github.com/lodash/lodash/security/advisories/GHSA-f23m-r3pf-42rh"
+  },
+  "schema_version": 1,
+  "summary": "lodash 4.17.23 and earlier is vulnerable to prototype pollution in _.unset and _.omit via array-wrapped path segments: the earlier fix for CVE-2025-13465 only guarded against string keys like 'constructor', so a path segment such as ['constructor'] bypassed it, allowing deletion of properties from built-in prototypes (Object.prototype, Number.prototype, String.prototype). Deletion only, not overwriting (GHSA-f23m-r3pf-42rh, CVE-2026-2950). Fixed in 4.18.0.",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
