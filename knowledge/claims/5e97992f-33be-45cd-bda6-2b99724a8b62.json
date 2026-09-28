@@ -1,0 +1,48 @@
+{
+  "claim_type": "DOCUMENTED_BUG",
+  "conditions": [
+    "The package version is exactly 5.7.3.",
+    "This is a fix-version claim: the described unbounded Web Stream buffering issue affects versions up to and including 5.7.2, and is not present starting with this version."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "49468eddb7c59e07fb95183afbf03498fccac99e",
+      "content_sha256": "f28aff67b78bc5b32ecaeb73d7a1e016cf34fd0155a60c8fe2e5d583ad82d6cc",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "0e04f440ed05e868b29802cae14bc767fc0ea005bea3a5a12106090e567a0637",
+        "path": "package.json"
+      },
+      "path": "lib/reply.js",
+      "repository": "https://github.com/fastify/fastify"
+    }
+  ],
+  "id": "5e97992f-33be-45cd-bda6-2b99724a8b62",
+  "license": {
+    "source_license": "MIT",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-28",
+    "state": "active"
+  },
+  "package": {
+    "purl": "pkg:npm/fastify@5.7.3",
+    "version": "5.7.3"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-28",
+    "source_authority": "official",
+    "source_url": "https://github.com/advisories/GHSA-mrq3-vjjr-p77c"
+  },
+  "schema_version": 1,
+  "summary": "Fastify <=5.7.2 has a DoS via unbounded memory allocation when replying with a Web Stream (CVE-2026-25224, GHSA-mrq3-vjjr-p77c). Apps returning a ReadableStream/Response Web Stream via reply.send() were affected: lib/reply.js's sendWebStream ignored res.write()'s backpressure signal, so a slow client could trigger unbounded buffering and crash the process. Fixed in 5.7.3 by checking res.write()'s return value and pausing the reader on backpressure ('drain' event).",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
