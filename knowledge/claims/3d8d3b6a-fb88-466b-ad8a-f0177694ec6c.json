@@ -1,0 +1,48 @@
+{
+  "claim_type": "DOCUMENTED_BUG",
+  "conditions": [
+    "The package version is exactly 0.2.23.",
+    "This is a fix-version claim: the described localtime_r soundness issue affects versions before 0.2.23, and is mitigated starting with this version by refusing to call the unsound path on Linux."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "f153a1ca5fdfec979f16c49619e6034cc67e186d",
+      "content_sha256": "bfeaee0cf2f00742fb6787ce045b9faa065a396776b8ff7f08f572d588a62c32",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "6a4de5a80fe69b9e35beac4203cd4c0c7dbf497df63e877fe237ef3cdb4448ea",
+        "path": "Cargo.toml"
+      },
+      "path": "CHANGELOG.md",
+      "repository": "https://github.com/time-rs/time"
+    }
+  ],
+  "id": "3d8d3b6a-fb88-466b-ad8a-f0177694ec6c",
+  "license": {
+    "source_license": "MIT",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-28",
+    "state": "active"
+  },
+  "package": {
+    "purl": "pkg:cargo/time@0.2.23",
+    "version": "0.2.23"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-28",
+    "source_authority": "official",
+    "source_url": "https://github.com/advisories/GHSA-wcg3-cvx6-7396"
+  },
+  "schema_version": 1,
+  "summary": "Rust time crate >=0.2.7, <0.2.23 (and 0.1.x) can segfault on unix-like OSes: it calls localtime_r, which reads TZ via getenv without synchronization. If another thread sets an env var concurrently, this can dereference a dangling pointer and crash (CVE-2020-26235, GHSA-wcg3-cvx6-7396). Fixed in 0.2.23: local-offset methods now fail or assume UTC on Linux instead of calling the unsound path.",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
