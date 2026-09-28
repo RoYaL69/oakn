@@ -41,6 +41,17 @@ class DependencyResolutionTests(unittest.TestCase):
 
         self.assertEqual(dependencies, [{"purl": "pkg:cargo/serde@1.0.210", "version": "1.0.210"}])
 
+    def test_resolves_pypi_dependency_from_pinned_requirements_txt(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / "requirements.txt").write_text(
+                "# comment\n-r base.txt\nrequests==2.32.3\nUnpinned-Package>=1.0\n"
+            )
+
+            dependencies = resolve_project(project)
+
+        self.assertEqual(dependencies, [{"purl": "pkg:pypi/requests@2.32.3", "version": "2.32.3"}])
+
     def test_discovers_a_nested_supported_project_when_the_repository_root_has_no_manifest(
         self,
     ) -> None:

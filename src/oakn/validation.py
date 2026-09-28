@@ -105,10 +105,14 @@ def _safe_source_url(url: str) -> None:
 
 
 def _package_from_purl(purl: str) -> tuple[str, str, str]:
-    match = re.fullmatch(r"pkg:(npm|maven|cargo)/([^@?#]+)@([^?#]+)", purl)
+    match = re.fullmatch(r"pkg:(npm|maven|cargo|pypi)/([^@?#]+)@([^?#]+)", purl)
     if not match:
-        raise ValidationError("package.purl must be an exact npm, maven or cargo purl")
+        raise ValidationError("package.purl must be an exact npm, maven, cargo or pypi purl")
     return match.group(1), match.group(2), match.group(3)
+
+
+def _normalize_pypi_name(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
 
 
 def _manifest_matches(package_type: str, name: str, version: str, manifest: bytes) -> bool:
@@ -119,6 +123,15 @@ def _manifest_matches(package_type: str, name: str, version: str, manifest: byte
         payload = tomllib.loads(manifest.decode("utf-8"))
         package = payload.get("package", {})
         return package.get("name") == name and package.get("version") == version
+    if package_type == "pypi":
+        payload = tomllib.loads(manifest.decode("utf-8"))
+        project = payload.get("project", {})
+        manifest_name = project.get("name")
+        return (
+            isinstance(manifest_name, str)
+            and _normalize_pypi_name(manifest_name) == _normalize_pypi_name(name)
+            and project.get("version") == version
+        )
     root = element_tree.fromstring(manifest)
     namespace = "{http://maven.apache.org/POM/4.0.0}"
     group = root.findtext(f"{namespace}groupId") or root.findtext("groupId")
