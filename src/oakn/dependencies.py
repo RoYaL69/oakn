@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import tomllib
 from pathlib import Path
 
 from defusedxml import ElementTree as element_tree
@@ -86,6 +87,25 @@ def _gradle_dependencies(project: Path) -> list[dict[str, str]]:
     ]
 
 
+def _cargo_dependencies(project: Path) -> list[dict[str, str]]:
+    manifest = tomllib.loads((project / "Cargo.toml").read_text())
+    names = set(manifest.get("dependencies", {})) | set(manifest.get("dev-dependencies", {}))
+    versions: dict[str, str] = {}
+    lock = project / "Cargo.lock"
+    if lock.exists():
+        for entry in tomllib.loads(lock.read_text()).get("package", []):
+            name = entry.get("name")
+            version = entry.get("version")
+            if name and version and name not in versions:
+                versions[name] = str(version)
+    resolved = []
+    for name in sorted(names):
+        version = versions.get(name)
+        if version:
+            resolved.append(_dependency(f"pkg:cargo/{name}@{version}", version))
+    return resolved
+
+
 _IGNORED_PROJECT_DIRECTORIES = {
     ".git",
     ".venv",
@@ -105,11 +125,13 @@ def _project_dependencies(project: Path) -> list[dict[str, str]] | None:
         return _maven_dependencies(project)
     if (project / "build.gradle").exists() or (project / "build.gradle.kts").exists():
         return _gradle_dependencies(project)
+    if (project / "Cargo.toml").exists():
+        return _cargo_dependencies(project)
     return None
 
 
 def _nested_project_roots(root: Path) -> list[Path]:
-    manifests = {"package.json", "pom.xml", "build.gradle", "build.gradle.kts"}
+    manifests = {"package.json", "pom.xml", "build.gradle", "build.gradle.kts", "Cargo.toml"}
     candidates: set[Path] = set()
     for directory, subdirectories, files in os.walk(root):
         subdirectories[:] = [

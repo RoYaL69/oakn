@@ -27,6 +27,20 @@ class DependencyResolutionTests(unittest.TestCase):
 
         self.assertEqual(dependencies, [{"purl": "pkg:npm/left-pad@1.3.0", "version": "1.3.0"}])
 
+    def test_resolves_cargo_dependency_from_cargo_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / "Cargo.toml").write_text(
+                '[package]\nname = "demo"\nversion = "0.1.0"\n\n[dependencies]\nserde = "1"\n'
+            )
+            (project / "Cargo.lock").write_text(
+                '[[package]]\nname = "serde"\nversion = "1.0.210"\n'
+            )
+
+            dependencies = resolve_project(project)
+
+        self.assertEqual(dependencies, [{"purl": "pkg:cargo/serde@1.0.210", "version": "1.0.210"}])
+
     def test_discovers_a_nested_supported_project_when_the_repository_root_has_no_manifest(
         self,
     ) -> None:

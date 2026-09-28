@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import tomllib
 import uuid
 from collections.abc import Callable, Iterable
 from datetime import date
@@ -104,9 +105,9 @@ def _safe_source_url(url: str) -> None:
 
 
 def _package_from_purl(purl: str) -> tuple[str, str, str]:
-    match = re.fullmatch(r"pkg:(npm|maven)/([^@?#]+)@([^?#]+)", purl)
+    match = re.fullmatch(r"pkg:(npm|maven|cargo)/([^@?#]+)@([^?#]+)", purl)
     if not match:
-        raise ValidationError("package.purl must be an exact npm or maven purl")
+        raise ValidationError("package.purl must be an exact npm, maven or cargo purl")
     return match.group(1), match.group(2), match.group(3)
 
 
@@ -114,6 +115,10 @@ def _manifest_matches(package_type: str, name: str, version: str, manifest: byte
     if package_type == "npm":
         payload = json.loads(manifest)
         return payload.get("name") == name and payload.get("version") == version
+    if package_type == "cargo":
+        payload = tomllib.loads(manifest.decode("utf-8"))
+        package = payload.get("package", {})
+        return package.get("name") == name and package.get("version") == version
     root = element_tree.fromstring(manifest)
     namespace = "{http://maven.apache.org/POM/4.0.0}"
     group = root.findtext(f"{namespace}groupId") or root.findtext("groupId")
