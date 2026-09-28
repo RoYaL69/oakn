@@ -1,0 +1,48 @@
+{
+  "claim_type": "DOCUMENTED_BUG",
+  "conditions": [
+    "The package version is exactly 1.5.5.",
+    "This is a fix-version claim: the described denial-of-service compilation issue affects versions < 1.5.5, and is not present starting with this version."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "d130381b150756ba7e5940efdc6ebdf47f4febc0",
+      "content_sha256": "5c834c2125abc10d0de3c377e34b1f2e2c10b837809631b1c688d3b536368cfd",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "d24b8d523fa59f67bd198baf19248909b6bcc143089353b92fd7320bda5d714d",
+        "path": "Cargo.toml"
+      },
+      "path": "src/compile.rs",
+      "repository": "https://github.com/rust-lang/regex"
+    }
+  ],
+  "id": "4dbd8ed6-2a7d-42fb-906b-31c0c3f36692",
+  "license": {
+    "source_license": "MIT OR Apache-2.0",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-28",
+    "state": "active"
+  },
+  "package": {
+    "purl": "pkg:cargo/regex@1.5.5",
+    "version": "1.5.5"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-28",
+    "source_authority": "official",
+    "source_url": "https://github.com/advisories/GHSA-m5pq-gvj9-9vr8"
+  },
+  "schema_version": 1,
+  "summary": "The rust-lang regex crate before 1.5.5 did not properly limit compiled regex complexity: a pattern like (?:){294967295} compiles the empty sub-expression many times; empty sub-expressions use no memory, so the size-limit machinery never triggered, causing DoS when parsing untrusted regex patterns (CVE-2022-24713, GHSA-m5pq-gvj9-9vr8). Only affects programs compiling untrusted patterns. Fixed in 1.5.5 (src/compile.rs) by counting repetitions on zero-cost sub-expressions during size estimation.",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
