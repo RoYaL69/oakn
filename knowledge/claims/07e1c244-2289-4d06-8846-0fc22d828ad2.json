@@ -1,0 +1,48 @@
+{
+  "claim_type": "DOCUMENTED_BUG",
+  "conditions": [
+    "The package version is exactly 1.10.0.",
+    "This is a fix-version claim: the described insecure interpolation defaults affect versions 1.5 through 1.9, and are not present starting with this version."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "9397c1cdce7e78ffb3f53267d47c857d54c45d1c",
+      "content_sha256": "eeea13e975bb3fa2ccfc3ab22c0b18f9661dfb5709399c74dfbe21c71528e831",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "388dd52348ba1842aa38aeb897c91d270b14661eb875a20fd98031535ab27567",
+        "path": "pom.xml"
+      },
+      "path": "src/changes/changes.xml",
+      "repository": "https://github.com/apache/commons-text"
+    }
+  ],
+  "id": "07e1c244-2289-4d06-8846-0fc22d828ad2",
+  "license": {
+    "source_license": "Apache-2.0",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-28",
+    "state": "active"
+  },
+  "package": {
+    "purl": "pkg:maven/org.apache.commons/commons-text@1.10.0",
+    "version": "1.10.0"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-28",
+    "source_authority": "official",
+    "source_url": "https://github.com/advisories/GHSA-599f-7c49-w659"
+  },
+  "schema_version": 1,
+  "summary": "Apache Commons Text 1.5 through 1.9 (Text4Shell) enables script, dns, and url StringLookup interpolators by default in StringSubstitutor.createInterpolator(). An app evaluating untrusted input like ${script:...} can trigger arbitrary code execution via the JVM script engine, or unwanted contact with remote servers via dns/url lookups (CVE-2022-42889, GHSA-599f-7c49-w659). Fixed in 1.10.0 by removing dns, url, and script from the defaults; enable via system property if needed.",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
