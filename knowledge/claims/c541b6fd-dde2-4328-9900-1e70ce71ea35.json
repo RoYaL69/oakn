@@ -1,0 +1,48 @@
+{
+  "claim_type": "DOCUMENTED_BUG",
+  "conditions": [
+    "The package version is exactly v1.9.0.",
+    "This is a fix-version claim: the described X-Forwarded-Prefix input-validation issue affects versions before v1.9.0, and is not present starting with this version."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "ea03e10384502e1baf6f560a2b0ea32c342ede5b",
+      "content_sha256": "e7dcc7f061c1c694240f8269db671840f57bf2341a948d558d58f371bf34d96b",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "66eb675cce7b7a3129c8b0c4aea206a36b782a30ece9683d15e42424ae76a4f7",
+        "path": "go.mod"
+      },
+      "path": "gin.go",
+      "repository": "https://github.com/gin-gonic/gin"
+    }
+  ],
+  "id": "c541b6fd-dde2-4328-9900-1e70ce71ea35",
+  "license": {
+    "source_license": "MIT",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-28",
+    "state": "active"
+  },
+  "package": {
+    "purl": "pkg:golang/github.com/gin-gonic/gin@v1.9.0",
+    "version": "v1.9.0"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-28",
+    "source_authority": "official",
+    "source_url": "https://github.com/gin-gonic/gin/security/advisories/GHSA-3vp4-m3rf-835h"
+  },
+  "schema_version": 1,
+  "summary": "gin-gonic/gin before v1.9.0 is vulnerable to improper input validation via the X-Forwarded-Prefix header: redirectTrailingSlash used the header's value unsanitized to build the redirect path, so a specially crafted value like ../../api could produce an open-redirect-style path traversal, potentially leading to cache poisoning (GHSA-3vp4-m3rf-835h). Fixed in v1.9.0 by sanitizing the header value with regSafePrefix ([^a-zA-Z0-9/-]+) before using it to build the redirected path.",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
