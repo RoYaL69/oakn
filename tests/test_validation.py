@@ -2,7 +2,7 @@ import hashlib
 import unittest
 from datetime import date
 
-from oakn.validation import ClaimValidator, ValidationError
+from oakn.validation import ClaimValidator, ValidationError, _network_fetch
 
 
 class ClaimValidationTests(unittest.TestCase):
@@ -252,6 +252,27 @@ class ClaimValidationTests(unittest.TestCase):
         }
         with self.assertRaises(ValidationError):
             ClaimValidator().validate(claim)
+
+    def test_default_network_fetch_allows_go_proxy_host(self) -> None:
+        # Regression test: the default fetcher used by ClaimValidator() with
+        # no explicit `fetch=` (i.e. what every real MCP tool call uses) must
+        # actually allow proxy.golang.org, not just raw.githubusercontent.com.
+        # This was broken by #17: _verify_go_module_version() built a
+        # proxy.golang.org URL and _safe_go_proxy_url() accepted it, but the
+        # shared _network_fetch() host allowlist only had
+        # raw.githubusercontent.com, so every real (non-mocked) golang claim
+        # validation failed with "source fetch is restricted to immutable
+        # GitHub raw content" before ever reaching the proxy. Only tests with
+        # a custom mocked fetch= exercised the golang path, so this went
+        # unnoticed until a real contribution hit it.
+        with self.assertRaises(ValidationError):
+            _network_fetch("https://evil.example.com/x")
+        with self.assertRaises(OSError):
+            # Valid host, bogus path -> proves the allowlist check itself
+            # passes and execution reaches the real HTTP request.
+            _network_fetch(
+                "https://proxy.golang.org/does-not-exist-xyz/@v/v0.0.0-does-not-exist.info"
+            )
 
 
 if __name__ == "__main__":

@@ -65,10 +65,16 @@ _INSTRUCTION_PATTERNS = [
 ]
 
 
+_FETCH_ALLOWED_HOSTS = {"raw.githubusercontent.com", _GO_PROXY_HOST}
+
+
 def _network_fetch(url: str) -> bytes:
     parsed = urlparse(url)
-    if parsed.scheme != "https" or parsed.hostname != "raw.githubusercontent.com":
-        raise ValidationError("source fetch is restricted to immutable GitHub raw content")
+    if parsed.scheme != "https" or parsed.hostname not in _FETCH_ALLOWED_HOSTS:
+        raise ValidationError(
+            "source fetch is restricted to immutable GitHub raw content "
+            "or the public Go module proxy"
+        )
     response = requests.get(url, timeout=15, allow_redirects=False)
     if response.status_code != 200:
         raise OSError(f"source fetch returned HTTP {response.status_code}")
