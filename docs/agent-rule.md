@@ -15,3 +15,7 @@
 
 Do not contribute business logic, trivial language facts, private data, opinions
 or unverified guesses.
+
+See `docs/contributing-claims.md` for the concrete, ecosystem-specific pitfalls
+(version-provability, hash computation, staging) encountered when actually
+building and submitting a claim.

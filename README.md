@@ -62,4 +62,6 @@ control-plane path runs without secrets. The release job executes only merged
 `main` code.
 
 See `docs/architecture.md` for trust decisions and `docs/agent-rule.md` for the
-agent loop.
+agent loop. See `docs/contributing-claims.md` for a practical, ecosystem-by-
+ecosystem walkthrough of what tends to trip people up the first time they
+build and stage a real claim.
