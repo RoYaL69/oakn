@@ -1,0 +1,48 @@
+{
+  "claim_type": "DOCUMENTED_BUG",
+  "conditions": [
+    "The package version is exactly v4.5.2.",
+    "This is a fix-version claim: the described allocation amplification affects the v4 line before v4.5.2 (and separately v3 through 3.2.2, and v5 before 5.2.2), and is not present starting with this version."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "2f0e9add62078527821828c76865661aa7718a84",
+      "content_sha256": "c611cf90c90b481ab5b2f13b4c835a24252493931fb31bffe1c41c06f3311358",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "0f8e678e6495b652c5c8aec1879c8171cd6ff1cf435fb47fe536362f88994299",
+        "path": "go.mod"
+      },
+      "path": "parser.go",
+      "repository": "https://github.com/golang-jwt/jwt"
+    }
+  ],
+  "id": "de0a73ee-8f8f-4a8d-8fa4-ffd8be487452",
+  "license": {
+    "source_license": "MIT",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-28",
+    "state": "active"
+  },
+  "package": {
+    "purl": "pkg:golang/github.com/golang-jwt/jwt/v4@v4.5.2",
+    "version": "v4.5.2"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-28",
+    "source_authority": "official",
+    "source_url": "https://github.com/golang-jwt/jwt/security/advisories/GHSA-mh63-6h87-95cp"
+  },
+  "schema_version": 1,
+  "summary": "golang-jwt/jwt v4 before v4.5.2 allows excessive memory allocation in Parser.ParseUnverified: it calls strings.Split on fully untrusted input, so a token consisting of Bearer followed by many period characters causes O(n) byte allocations (CWE-405, GHSA-mh63-6h87-95cp / CVE-2025-30204). Fixed in v4.5.2 via a bounded strings.Cut-based splitToken helper that rejects inputs with more than two delimiters instead of allocating a slice for all of them.",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
