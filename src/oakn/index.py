@@ -101,6 +101,15 @@ class ClaimIndex:
         topic: str | None = None,
         limit: int = 3,
     ) -> list[dict[str, Any]]:
+        """Exact-match a claim by full purl and version before ranking.
+
+        ``purl`` must include the exact version suffix stored on the claim
+        (for example ``pkg:npm/p-limit@4.0.0``), matching ``package.purl`` in
+        the claim JSON. ``version`` is matched separately against
+        ``package.version`` and must agree with the version encoded in
+        ``purl``; passing a bare package purl (``pkg:npm/p-limit``) never
+        matches and looks like a miss.
+        """
         text = " ".join(part for part in [query, topic] if part)
         fts_query = _fts_query(text)
         if not fts_query:

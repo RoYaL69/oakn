@@ -160,6 +160,14 @@ class KnowledgeClient:
     def search(
         self, query: str, purl: str, version: str, topic: str | None = None
     ) -> dict[str, Any]:
+        """Search the local index for a claim matching an exact package version.
+
+        ``purl`` must be the full package purl including the version suffix
+        (for example ``pkg:npm/p-limit@4.0.0``), not just the bare package
+        purl (``pkg:npm/p-limit``); ``version`` must match the same version.
+        See ``docs/architecture.md`` for the retrieval broadening sequence
+        used on a miss.
+        """
         started = time.perf_counter()
         variants = [query, query.replace("-", " "), query.replace("configuration", "config")]
         results: list[dict[str, Any]] = []

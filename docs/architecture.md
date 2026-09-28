@@ -20,8 +20,10 @@ branch.
 ## Core loop
 
 1. `resolve_project` reads manifests and lockfiles for exact package versions.
-2. `search` searches only a local, verified SQLite FTS5 index, filtered by purl
-   and exact version before BM25 ranking.
+2. `search` searches only a local, verified SQLite FTS5 index, filtered by the
+   full package purl (including its exact version, e.g. `pkg:npm/p-limit@4.0.0`)
+   and the matching exact version before BM25 ranking. A bare package purl
+   without a version (`pkg:npm/p-limit`) never matches.
 3. A miss is broadened through query variants, package-only search, nearby
    version hints and duplicate-candidate detection. Only then is it a true miss.
 4. A candidate constructed solely from public evidence is validated locally,
