@@ -164,9 +164,26 @@ def _manifest_matches(package_type: str, name: str, version: str, manifest: byte
         return declared is not None and declared.group(1) == name
     root = element_tree.fromstring(manifest)
     namespace = "{http://maven.apache.org/POM/4.0.0}"
-    group = root.findtext(f"{namespace}groupId") or root.findtext("groupId")
-    artifact = root.findtext(f"{namespace}artifactId") or root.findtext("artifactId")
-    pom_version = root.findtext(f"{namespace}version") or root.findtext("version")
+
+    def _findtext(tag: str) -> str | None:
+        return root.findtext(f"{namespace}{tag}") or root.findtext(tag)
+
+    def _find_parent_text(tag: str) -> str | None:
+        parent = root.find(f"{namespace}parent") or root.find("parent")
+        if parent is None:
+            return None
+        return parent.findtext(f"{namespace}{tag}") or parent.findtext(tag)
+
+    # Maven's own inheritance model lets a module's pom.xml omit <groupId>
+    # and/or <version> at the top level and inherit them from its <parent>
+    # instead -- a very common idiom for multi-module projects (e.g.
+    # org.apache.commons:commons-text inherits <groupId> from its
+    # commons-parent, while declaring its own <artifactId>/<version>).
+    # Falling back to the parent's values mirrors what Maven itself does
+    # when resolving the effective groupId/version.
+    group = _findtext("groupId") or _find_parent_text("groupId")
+    artifact = _findtext("artifactId")
+    pom_version = _findtext("version") or _find_parent_text("version")
     return f"{group}/{artifact}" == name and pom_version == version
 
 
