@@ -17,7 +17,11 @@ PYTHONPATH=src python3 -m oakn.mcp  # explicit stdio MCP server; no Hermes confi
 ```
 
 The MCP exposes `resolve_project`, `search`, `get`, `contribute`, `record_outcome`,
-`sync`, and `validate_candidate`. `record_outcome` records an explicit accepted or
+`sync`, and `validate_candidate`. `search(query, purl, version, topic=None)`
+requires the **full package purl including its exact version**
+(`pkg:npm/p-limit@4.0.0`, not the bare `pkg:npm/p-limit`), matching `version`;
+see `docs/architecture.md` for the retrieval broadening sequence on a miss.
+`record_outcome` records an explicit accepted or
 rejected applicability outcome only in local metrics; it never alters a claim or
 contacts GitHub. It is opt-in and session-local by default; see
 `docs/session-local-mcp.md`. For a reproducible stdio sync-and-search run with no

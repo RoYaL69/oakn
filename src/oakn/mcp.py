@@ -75,7 +75,13 @@ def create_mcp_server(
         return _response({"dependencies": resolve_project(project)})
 
     @server.tool(
-        name="search", description="Search the local verified index for compact claim summaries."
+        name="search",
+        description=(
+            "Search the local verified index for compact claim summaries. "
+            "`purl` must be the full package purl including the exact version "
+            "(e.g. 'pkg:npm/p-limit@4.0.0'), matching `version`; a bare "
+            "package purl without a version never matches."
+        ),
     )
     def search_tool(
         query: str, purl: str, version: str, topic: str | None = None
