@@ -106,6 +106,32 @@ def _cargo_dependencies(project: Path) -> list[dict[str, str]]:
     return resolved
 
 
+_PYPI_EXACT_PIN = re.compile(
+    r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)\s*(?:\[[^\]]*\])?\s*==\s*([A-Za-z0-9.+!_-]+)\s*(?:;.*)?$"
+)
+
+
+def _pypi_dependencies(project: Path) -> list[dict[str, str]]:
+    resolved: dict[str, dict[str, str]] = {}
+    for filename in ("requirements.txt", "requirements-dev.txt"):
+        path = project / filename
+        if not path.exists():
+            continue
+        for line in path.read_text().splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#") or stripped.startswith("-"):
+                continue
+            match = _PYPI_EXACT_PIN.match(stripped)
+            if not match:
+                continue
+            name, version = match.group(1), match.group(2)
+            normalized = name.lower().replace("_", "-")
+            resolved.setdefault(
+                normalized, _dependency(f"pkg:pypi/{normalized}@{version}", version)
+            )
+    return [resolved[name] for name in sorted(resolved)]
+
+
 _IGNORED_PROJECT_DIRECTORIES = {
     ".git",
     ".venv",
@@ -127,11 +153,20 @@ def _project_dependencies(project: Path) -> list[dict[str, str]] | None:
         return _gradle_dependencies(project)
     if (project / "Cargo.toml").exists():
         return _cargo_dependencies(project)
+    if (project / "requirements.txt").exists():
+        return _pypi_dependencies(project)
     return None
 
 
 def _nested_project_roots(root: Path) -> list[Path]:
-    manifests = {"package.json", "pom.xml", "build.gradle", "build.gradle.kts", "Cargo.toml"}
+    manifests = {
+        "package.json",
+        "pom.xml",
+        "build.gradle",
+        "build.gradle.kts",
+        "Cargo.toml",
+        "requirements.txt",
+    }
     candidates: set[Path] = set()
     for directory, subdirectories, files in os.walk(root):
         subdirectories[:] = [
