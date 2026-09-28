@@ -51,6 +51,7 @@ _ALLOWED_STATES = {
     "unknown",
 }
 _ALLOWED_HOSTS = {"github.com", "raw.githubusercontent.com"}
+_GO_PROXY_HOST = "proxy.golang.org"
 _SECRET_PATTERNS = [
     re.compile(r"(?i)(api[_-]?key|secret|token|password)\s*[:=]\s*[^\s]{4,}"),
     re.compile(r"AKIA[0-9A-Z]{16}"),
@@ -90,6 +91,20 @@ def _sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def _go_proxy_info_url(module_path: str, version: str) -> str:
+    escaped_path = "".join(f"!{c.lower()}" if c.isupper() else c for c in module_path)
+    escaped_version = "".join(f"!{c.lower()}" if c.isupper() else c for c in version)
+    return f"https://{_GO_PROXY_HOST}/{escaped_path}/@v/{escaped_version}.info"
+
+
+def _safe_go_proxy_url(url: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.hostname != _GO_PROXY_HOST:
+        raise ValidationError("go module version must be verified via the public Go proxy")
+    if parsed.username or parsed.password or parsed.port:
+        raise ValidationError("go proxy URL may not contain credentials or a port")
+
+
 def _raw_github_url(repository: str, commit_sha: str, path: str) -> str:
     parsed = urlparse(repository)
     repo_path = parsed.path.strip("/")
@@ -105,9 +120,11 @@ def _safe_source_url(url: str) -> None:
 
 
 def _package_from_purl(purl: str) -> tuple[str, str, str]:
-    match = re.fullmatch(r"pkg:(npm|maven|cargo|pypi)/([^@?#]+)@([^?#]+)", purl)
+    match = re.fullmatch(r"pkg:(npm|maven|cargo|pypi|golang)/([^@?#]+)@([^?#]+)", purl)
     if not match:
-        raise ValidationError("package.purl must be an exact npm, maven, cargo or pypi purl")
+        raise ValidationError(
+            "package.purl must be an exact npm, maven, cargo, pypi or golang purl"
+        )
     return match.group(1), match.group(2), match.group(3)
 
 
@@ -132,6 +149,13 @@ def _manifest_matches(package_type: str, name: str, version: str, manifest: byte
             and _normalize_pypi_name(manifest_name) == _normalize_pypi_name(name)
             and project.get("version") == version
         )
+    if package_type == "golang":
+        # go.mod carries no version field; only the module path is verifiable
+        # from the manifest itself. The claimed version is independently
+        # verified against the Go module proxy's checksummed @v/<version>.info
+        # endpoint in ClaimValidator._validate_evidence.
+        declared = re.search(r"(?m)^module\s+(\S+)", manifest.decode("utf-8"))
+        return declared is not None and declared.group(1) == name
     root = element_tree.fromstring(manifest)
     namespace = "{http://maven.apache.org/POM/4.0.0}"
     group = root.findtext(f"{namespace}groupId") or root.findtext("groupId")
@@ -318,6 +342,27 @@ class ClaimValidator:
                     raise ValidationError(
                         "package name or exact version does not match public manifest"
                     )
+                if package_type == "golang":
+                    self._verify_go_module_version(package_name, version)
+
+    def _verify_go_module_version(self, module_path: str, version: str) -> None:
+        # go.mod has no version field, so the claimed version is verified
+        # independently against the Go module proxy: proxy.golang.org serves
+        # an immutable, checksum-addressed .info document per module@version
+        # (see https://proxy.golang.org/, GOPROXY protocol) rather than
+        # trusting the claim author's stated version.
+        proxy_url = _go_proxy_info_url(module_path, version)
+        _safe_go_proxy_url(proxy_url)
+        try:
+            info_bytes = self._fetch(proxy_url)
+        except OSError as error:
+            raise ValidationError("go module version could not be verified via proxy") from error
+        try:
+            info = json.loads(info_bytes)
+        except json.JSONDecodeError as error:
+            raise ValidationError("go proxy version info is not parseable") from error
+        if info.get("Version") != version:
+            raise ValidationError("go proxy does not confirm the claimed module version")
 
 
 def validate_contribution_paths(changes: Iterable[tuple[str, str]]) -> str:
