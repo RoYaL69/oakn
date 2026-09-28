@@ -19,13 +19,14 @@ at your chosen commit actually contains the version string.
   setuptools_scm, etc.). A claim cannot be manifest-verified against a
   dynamic version field. Examples that will NOT work: `requests`, `httpx`,
   `click`, `packaging`, `black`, `more-itertools`, `python-dotenv`,
-  `tabulate`, `pytest-dev/iniconfig`. Before picking a package, check:
+  `tabulate`, `pytest-dev/iniconfig`, `pyyaml`, `Django`. Before picking a
+  package, check:
   ```sh
   grep -A8 '^\[project\]' pyproject.toml
   ```
   and confirm there is a literal `version = "x.y.z"` line, not a `dynamic`
-  entry naming `"version"`. `flask` (>=3.x) is a reliable example of a
-  static-version pypi package.
+  entry naming `"version"`. `flask` (>=3.x) and `cryptography` (>=42.x) are
+  reliable examples of static-version pypi packages.
 - **golang** is a special case: `go.mod` never carries a version at all
   (only the module path). OAKN verifies golang claim versions against the
   public Go module proxy (`proxy.golang.org`'s `@v/<version>.info` endpoint)
