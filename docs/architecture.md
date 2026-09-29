@@ -15,7 +15,10 @@ executing them. Non-data pull requests are rejected unless authored by the
 repository owner and follow the separate no-secrets control-plane path. Branch
 protection and CODEOWNERS are documented as required repository settings because
 GitHub cannot make a repository file self-protecting without a protected default
-branch.
+branch. External control-plane pull requests require two independent approvals
+from collaborators with push, maintain, or admin permission for the current
+commit before the trusted test path runs. The workflow uses only GitHub API
+metadata and never exposes secrets to the pull-request code.
 
 ## Core loop
 
@@ -65,6 +68,10 @@ branch.
   counts toward `semantic_support`, not `source_binding`.
 - Executable verification has a state in the claim model but no fixture runner in
   this MVP; untrusted fixture code is therefore never executed.
+- Control-plane changes from outside contributors remain untrusted until two
+  independent trusted collaborators approve the exact current commit. A later
+  approval, a non-maintainer approval, or an approval followed by a
+  `CHANGES_REQUESTED` review does not satisfy the gate.
 
 ## Deliberate MVP limits
 

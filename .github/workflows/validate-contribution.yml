@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   validate:
@@ -36,11 +37,31 @@ jobs:
           else
             echo "kind=non-knowledge" >> "$GITHUB_OUTPUT"
           fi
-      - name: Reject untrusted non-knowledge pull request
+      - name: Fetch maintainer reviews for external control-plane pull request
         if: steps.contribution.outputs.kind == 'non-knowledge' && github.event.pull_request.user.login != github.repository_owner
-        run: exit 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --location \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            "https://api.github.com/repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
+            > "$RUNNER_TEMP/reviews.json"
+          curl --fail-with-body --silent --show-error --location \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            "https://api.github.com/repos/${REPOSITORY}/collaborators?affiliation=all&per_page=100" \
+            > "$RUNNER_TEMP/collaborators.json"
+          python3 "$GITHUB_WORKSPACE/scripts/check_control_plane_approvals.py" \
+            --reviews "$RUNNER_TEMP/reviews.json" \
+            --collaborators "$RUNNER_TEMP/collaborators.json" \
+            --head-sha "$HEAD_SHA"
       - name: Validate trusted control-plane pull request without secrets
-        if: steps.contribution.outputs.kind == 'non-knowledge' && github.event.pull_request.user.login == github.repository_owner
+        if: steps.contribution.outputs.kind == 'non-knowledge' && (github.event.pull_request.user.login == github.repository_owner || success())
         working-directory: ${{ runner.temp }}/pull-request
         run: |
           python3 -m pip install .
