@@ -232,9 +232,9 @@ class ClaimValidator:
     def _validate_affected(self, package: dict[str, Any], package_type: str) -> None:
         if not set(package) <= {"purl", "version", "affected"}:
             raise ValidationError("package may contain only purl, version and affected")
-        affected = package.get("affected")
-        if affected is None:
+        if "affected" not in package:
             return
+        affected = package["affected"]
         if not isinstance(affected, str) or len(affected) > 200:
             raise ValidationError(
                 "package.affected must be a VERS string of at most 200 characters"

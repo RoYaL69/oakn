@@ -4,21 +4,21 @@ import re
 
 from univers.version_range import VersionRange
 
-_PURL = re.compile(r"pkg:([a-z]+)/([^@?#]+)(?:@([^?#]+))?")
+_PURL = re.compile(r"pkg:([a-z]+)/([^@?#]+)(?:@([^?#]+))?([?#].*)?")
 
 
 def split_purl(purl: str) -> tuple[str, str, str | None]:
     """Split a purl into its type, its versionless base and its version, if any.
 
     ``pkg:npm/p-limit@4.0.0`` gives ``("npm", "pkg:npm/p-limit", "4.0.0")``.
-    Qualifiers and subpaths are dropped. Raises ``ValueError`` for a string
-    that is not a purl.
+    Qualifiers and subpaths remain part of the versionless package identity.
+    Raises ``ValueError`` for a string that is not a purl.
     """
-    match = _PURL.fullmatch(purl.split("?", 1)[0].split("#", 1)[0])
+    match = _PURL.fullmatch(purl)
     if not match:
         raise ValueError(f"not a package purl: {purl!r}")
-    package_type, name, version = match.groups()
-    return package_type, f"pkg:{package_type}/{name}", version
+    package_type, name, version, suffix = match.groups()
+    return package_type, f"pkg:{package_type}/{name}{suffix or ''}", version
 
 
 def parse_affected(package_type: str, affected: str) -> VersionRange:

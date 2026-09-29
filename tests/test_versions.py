@@ -52,9 +52,17 @@ class VersionHelperTests(unittest.TestCase):
     def test_split_purl_separates_type_base_and_optional_version(self) -> None:
         self.assertEqual(
             split_purl("pkg:maven/org.apache.commons/commons-text@1.10.0?type=jar"),
-            ("maven", "pkg:maven/org.apache.commons/commons-text", "1.10.0"),
+            (
+                "maven",
+                "pkg:maven/org.apache.commons/commons-text?type=jar",
+                "1.10.0",
+            ),
         )
         self.assertEqual(split_purl("pkg:npm/p-limit"), ("npm", "pkg:npm/p-limit", None))
+        self.assertEqual(
+            split_purl("pkg:npm/p-limit@4.0.0#dist"),
+            ("npm", "pkg:npm/p-limit#dist", "4.0.0"),
+        )
         with self.assertRaises(ValueError):
             split_purl("p-limit@4.0.0")
 
@@ -109,6 +117,23 @@ class RangeRetrievalTests(unittest.TestCase):
 
         self.assertEqual([result["claim_id"] for result in bare], [TEXT4SHELL])
         self.assertEqual(disagreeing, [])
+
+    def test_qualifiers_and_subpaths_do_not_match_another_package_identity(self) -> None:
+        index = ClaimIndex(self.index_path)
+
+        qualified = index.search(
+            "script",
+            "pkg:maven/org.apache.commons/commons-text@1.9?classifier=sources",
+            "1.9",
+        )
+        subpath = index.search(
+            "script",
+            "pkg:maven/org.apache.commons/commons-text@1.9#nested",
+            "1.9",
+        )
+
+        self.assertEqual(qualified, [])
+        self.assertEqual(subpath, [])
 
     def test_version_outside_every_range_misses_with_other_version_hints(self) -> None:
         client = KnowledgeClient(self.index_path)
@@ -219,6 +244,7 @@ class AffectedValidationTests(unittest.TestCase):
             ({"affected": "vers:npm/<<1"}, "not a valid VERS range"),
             ({"affected": "vers:pypi/<1.2.6"}, "does not match purl type"),
             ({"affected": 126}, "must be a VERS string"),
+            ({"affected": None}, "must be a VERS string"),
             ({"affected": "vers:npm/<" + "1" * 200}, "must be a VERS string"),
             ({"ranges": []}, "only purl, version and affected"),
         ]:
