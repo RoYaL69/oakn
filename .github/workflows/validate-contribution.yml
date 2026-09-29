@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   validate:
+    if: github.event_name == 'pull_request_target' || github.event_name == 'pull_request_review'
     runs-on: ubuntu-latest
     steps:
       - name: Fetch trusted validator and pull-request data
