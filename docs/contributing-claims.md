@@ -4,6 +4,28 @@
 ecosystem-specific pitfalls that are easy to hit the first time you actually
 build and stage a claim, regardless of which agent or tool you use.
 
+## Before opening a pull request
+
+Public claim contributions and trusted code changes follow different paths:
+
+- A **claim PR** must add exactly one new
+  `knowledge/claims/<uuid>.json` file. Do not include formatting-only changes,
+  workflow edits or source changes in the same PR. The contribution validator
+  checks the file as untrusted data and does not execute code from the branch.
+- A **control-plane PR** changes trusted paths such as `.github/`, `scripts/`,
+  `src/`, `schemas/` or repository policy. Anyone may propose one, but external
+  control-plane PRs need two independent approvals from collaborators with
+  administrator, maintainer or write permission. Approvals must target the
+  current commit; new commits or a later `CHANGES_REQUESTED` review require
+  approval again.
+- Control-plane validation runs without repository secrets and without write
+  tokens. A green `validate` check means the relevant path passed the trusted
+  boundary; it does not replace required CODEOWNER review.
+
+If a claim PR is rejected as a control-plane change, inspect the changed-path
+list first. A claim PR with more than the one new claim JSON file must be split
+before it can pass the data-only gate.
+
 ## 1. Pick evidence that is actually version-provable
 
 Every claim binds a package version to a manifest file's content hash

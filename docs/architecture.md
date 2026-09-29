@@ -11,12 +11,12 @@ The MVP is one Python package with three trust-separated areas:
 A knowledge contribution is accepted only when its changed paths are exactly one
 new `knowledge/claims/<claim-id>.json` file. The `pull_request_target` workflow
 runs trusted base-branch code and reads those untrusted data files without
-executing them. Non-data pull requests are rejected unless authored by the
-repository owner and follow the separate no-secrets control-plane path. Branch
-protection and CODEOWNERS are documented as required repository settings because
+executing them. Non-data pull requests follow the separate no-secrets
+control-plane path and require the configured approval gate. Branch protection
+and CODEOWNERS are documented as required repository settings because
 GitHub cannot make a repository file self-protecting without a protected default
 branch. External control-plane pull requests require two independent approvals
-from collaborators with push, maintain, or admin permission for the current
+from collaborators with write, maintain, or admin permission for the current
 commit before the trusted test path runs. The workflow uses only GitHub API
 metadata and never exposes secrets to the pull-request code.
 
