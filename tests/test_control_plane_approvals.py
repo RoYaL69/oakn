@@ -41,12 +41,14 @@ class ControlPlaneApprovalTests(unittest.TestCase):
         result = run_check(
             [
                 {
+                    "id": 1,
                     "user": {"login": "owner"},
                     "state": "APPROVED",
                     "commit_id": HEAD,
                     "submitted_at": "2026-01-01T00:00:00Z",
                 },
                 {
+                    "id": 2,
                     "user": {"login": "maintainer"},
                     "state": "APPROVED",
                     "commit_id": HEAD,
@@ -64,12 +66,14 @@ class ControlPlaneApprovalTests(unittest.TestCase):
         result = run_check(
             [
                 {
+                    "id": 1,
                     "user": {"login": "owner"},
                     "state": "APPROVED",
                     "commit_id": "b" * 40,
                     "submitted_at": "2026-01-01T00:00:00Z",
                 },
                 {
+                    "id": 2,
                     "user": {"login": "random"},
                     "state": "APPROVED",
                     "commit_id": HEAD,
@@ -87,22 +91,58 @@ class ControlPlaneApprovalTests(unittest.TestCase):
         result = run_check(
             [
                 {
+                    "id": 1,
                     "user": {"login": "owner"},
                     "state": "APPROVED",
                     "commit_id": HEAD,
                     "submitted_at": "2026-01-01T00:00:00Z",
                 },
                 {
+                    "id": 2,
                     "user": {"login": "maintainer"},
                     "state": "APPROVED",
                     "commit_id": HEAD,
                     "submitted_at": "2026-01-01T00:01:00Z",
                 },
                 {
+                    "id": 3,
                     "user": {"login": "maintainer"},
                     "state": "CHANGES_REQUESTED",
                     "commit_id": HEAD,
                     "submitted_at": "2026-01-01T00:02:00Z",
+                },
+            ],
+            [
+                {"login": "owner", "permissions": {"admin": True}},
+                {"login": "maintainer", "permissions": {"push": True}},
+            ],
+        )
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_review_id_breaks_timestamp_ties(self) -> None:
+        timestamp = "2026-01-01T00:00:00Z"
+        result = run_check(
+            [
+                {
+                    "id": 1,
+                    "user": {"login": "owner"},
+                    "state": "APPROVED",
+                    "commit_id": HEAD,
+                    "submitted_at": timestamp,
+                },
+                {
+                    "id": 2,
+                    "user": {"login": "owner"},
+                    "state": "CHANGES_REQUESTED",
+                    "commit_id": HEAD,
+                    "submitted_at": timestamp,
+                },
+                {
+                    "id": 3,
+                    "user": {"login": "maintainer"},
+                    "state": "APPROVED",
+                    "commit_id": HEAD,
+                    "submitted_at": timestamp,
                 },
             ],
             [

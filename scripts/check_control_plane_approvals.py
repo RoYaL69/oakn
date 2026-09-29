@@ -31,11 +31,16 @@ def approved_maintainers(
         submitted_at = review.get("submitted_at")
         if login in trusted and isinstance(submitted_at, str):
             previous = latest.get(login)
-            if previous is None or submitted_at > previous["submitted_at"]:
+            review_key = (submitted_at, review.get("id", 0))
+            previous_key = (
+                (previous["submitted_at"], previous["id"]) if previous is not None else None
+            )
+            if previous is None or review_key > previous_key:
                 latest[login] = {
                     "state": review.get("state"),
                     "commit_id": review.get("commit_id"),
                     "submitted_at": submitted_at,
+                    "id": review.get("id", 0),
                 }
     return {
         login

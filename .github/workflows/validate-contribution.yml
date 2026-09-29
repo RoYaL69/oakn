@@ -7,6 +7,7 @@ on:
     types: [submitted, edited, dismissed]
 
 permissions:
+  administration: read
   contents: read
   pull-requests: read
 
@@ -64,7 +65,7 @@ jobs:
               permissions: {
                 admin: (.permission == "admin"),
                 maintain: (.permission == "maintain"),
-                push: (.permission == "push")
+                push: (.permission == "push" or .permission == "write")
               }
             }]' > "$RUNNER_TEMP/collaborators.json"
           python3 "$GITHUB_WORKSPACE/scripts/check_control_plane_approvals.py" \
