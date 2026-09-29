@@ -3,6 +3,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import math
 import os
 import shutil
 import tempfile
@@ -66,6 +67,11 @@ def build_bundle(index_path: str | Path, release_directory: str | Path) -> Path:
     manifest_path = release / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     return manifest_path
+
+
+def _estimated_tokens(payload: Any) -> int:
+    """Estimate the tokens an agent reads for ``payload``: its JSON length over four."""
+    return math.ceil(len(json.dumps(payload, sort_keys=True)) / 4)
 
 
 def _terms(text: str) -> set[str]:
@@ -140,7 +146,6 @@ class KnowledgeClient:
             ),
             "retrieval_tokens": int(recorded["retrieval_tokens"]),
             "contribution_tokens": int(recorded["contribution_tokens"]),
-            "estimated_research_tokens_avoided": int(recorded["research_tokens_avoided"]),
             "index_size_bytes": index_size,
             "claim_count": claim_count,
         }
@@ -160,13 +165,14 @@ class KnowledgeClient:
     def search(
         self, query: str, purl: str, version: str, topic: str | None = None
     ) -> dict[str, Any]:
-        """Search the local index for a claim matching an exact package version.
+        """Search the local index for claims that apply to ``version`` of a package.
 
-        ``purl`` must be the full package purl including the version suffix
-        (for example ``pkg:npm/p-limit@4.0.0``), not just the bare package
-        purl (``pkg:npm/p-limit``); ``version`` must match the same version.
-        See ``docs/architecture.md`` for the retrieval broadening sequence
-        used on a miss.
+        ``purl`` names the package with or without its version suffix; a
+        suffix that disagrees with ``version`` matches nothing. A claim
+        applies to its own version and to every version in its ``affected``
+        range. On a miss, ``package_candidates`` lists the package's other
+        claims, each flagged ``applies_to_version``. See
+        ``docs/architecture.md`` for the retrieval broadening sequence.
         """
         started = time.perf_counter()
         variants = [query, query.replace("-", " "), query.replace("configuration", "config")]
@@ -186,8 +192,7 @@ class KnowledgeClient:
                 search_count=1,
                 knowledge_hits=1,
                 retrieval_latency_ms=elapsed_ms,
-                retrieval_tokens=1,
-                research_tokens_avoided=1,
+                retrieval_tokens=_estimated_tokens(results[:3]),
             )
             return {
                 "status": "hit",
@@ -199,19 +204,13 @@ class KnowledgeClient:
             search_count=1,
             true_misses=1,
             retrieval_latency_ms=elapsed_ms,
-            retrieval_tokens=1,
+            retrieval_tokens=_estimated_tokens(package_results[:5]),
         )
         return {
             "status": "true_miss",
             "results": [],
             "package_candidates": package_results[:5],
-            "checked": [
-                "exact",
-                "query_variants",
-                "package_only",
-                "nearby_versions_hint",
-                "duplicate_candidates",
-            ],
+            "checked": ["version_and_range", "query_variants", "package_only", "other_versions"],
             "metrics": metrics,
             "untrusted_reference_data": True,
         }
@@ -233,7 +232,7 @@ class KnowledgeClient:
         if target.exists():
             raise ValidationError("immutable claim id already exists")
         target.write_text(json.dumps(candidate, indent=2, sort_keys=True) + "\n")
-        self._record(contribution_count=1, contribution_tokens=1)
+        self._record(contribution_count=1, contribution_tokens=_estimated_tokens(candidate))
         return target
 
     def _reject_duplicate(self, candidate: dict[str, Any], claims: Path) -> None:

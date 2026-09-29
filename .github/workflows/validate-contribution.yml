@@ -3,9 +3,13 @@ name: Validate pull request boundary
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
 
 permissions:
+  administration: read
   contents: read
+  pull-requests: read
 
 jobs:
   validate:
@@ -27,20 +31,63 @@ jobs:
           git worktree add --detach "$RUNNER_TEMP/pull-request" FETCH_HEAD
           git diff --name-status "$BASE_SHA" "$PR_SHA" > "$RUNNER_TEMP/changes.txt"
       - name: Install trusted validator dependencies
-        run: python3 -m pip install 'defusedxml==0.7.1' 'requests==2.34.2'
+        run: python3 -m pip install 'defusedxml==0.7.1' 'requests==2.34.2' 'univers==32.0.1'
       - name: Validate untrusted knowledge contribution as data only
         id: contribution
         run: |
-          if python3 "$GITHUB_WORKSPACE/scripts/validate_contribution.py" "$RUNNER_TEMP/pull-request" --changes "$RUNNER_TEMP/changes.txt"; then
+          set -euo pipefail
+          if grep -Eq $'\tknowledge/claims/' "$RUNNER_TEMP/changes.txt"; then
+            python3 "$GITHUB_WORKSPACE/scripts/validate_contribution.py" \
+              "$RUNNER_TEMP/pull-request" --changes "$RUNNER_TEMP/changes.txt"
             echo "kind=knowledge" >> "$GITHUB_OUTPUT"
           else
             echo "kind=non-knowledge" >> "$GITHUB_OUTPUT"
           fi
-      - name: Reject untrusted non-knowledge pull request
+      - name: Fetch maintainer reviews for external control-plane pull request
         if: steps.contribution.outputs.kind == 'non-knowledge' && github.event.pull_request.user.login != github.repository_owner
-        run: exit 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          gh api --paginate --slurp \
+            "repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" |
+            jq 'add' > "$RUNNER_TEMP/reviews.json"
+          jq -r '.[] | select(.user.login != null) | .user.login' "$RUNNER_TEMP/reviews.json" |
+            sort -u > "$RUNNER_TEMP/reviewers.txt"
+          : > "$RUNNER_TEMP/permissions.jsonl"
+          while IFS= read -r login; do
+            response=$(curl --silent --show-error --location \
+              --header "Accept: application/vnd.github+json" \
+              --header "Authorization: Bearer ${GH_TOKEN}" \
+              --write-out $'\n%{http_code}' \
+              "https://api.github.com/repos/${REPOSITORY}/collaborators/${login}/permission")
+            status="${response##*$'\n'}"
+            body="${response%$'\n'*}"
+            if [[ "$status" == "404" ]]; then
+              continue
+            elif [[ "$status" != "200" ]]; then
+              printf '%s\n' "$body" >&2
+              exit 1
+            fi
+            printf '%s\n' "$body" >> "$RUNNER_TEMP/permissions.jsonl"
+          done < "$RUNNER_TEMP/reviewers.txt"
+          jq -s '[.[] | {
+              login: .user.login,
+              permissions: {
+                admin: (.permission == "admin"),
+                maintain: (.permission == "maintain"),
+                push: (.permission == "push" or .permission == "write")
+              }
+            }]' "$RUNNER_TEMP/permissions.jsonl" > "$RUNNER_TEMP/collaborators.json"
+          python3 "$GITHUB_WORKSPACE/scripts/check_control_plane_approvals.py" \
+            --reviews "$RUNNER_TEMP/reviews.json" \
+            --collaborators "$RUNNER_TEMP/collaborators.json" \
+            --head-sha "$HEAD_SHA"
       - name: Validate trusted control-plane pull request without secrets
-        if: steps.contribution.outputs.kind == 'non-knowledge' && github.event.pull_request.user.login == github.repository_owner
+        if: steps.contribution.outputs.kind == 'non-knowledge' && (github.event.pull_request.user.login == github.repository_owner || success())
         working-directory: ${{ runner.temp }}/pull-request
         run: |
           python3 -m pip install .
