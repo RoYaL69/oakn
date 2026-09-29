@@ -82,7 +82,7 @@ class EndToEndTests(unittest.TestCase):
 
         self.assertEqual(hit["status"], "hit")
         self.assertEqual(hit["results"][0]["claim_id"], claim["id"])
-        self.assertGreaterEqual(hit["metrics"]["research_tokens_avoided"], 1)
+        self.assertGreater(hit["metrics"]["retrieval_tokens"], 0)
 
 
 if __name__ == "__main__":

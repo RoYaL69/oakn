@@ -8,7 +8,16 @@
   "properties": {
     "schema_version": {"const": 1},
     "id": {"type": "string", "format": "uuid"},
-    "package": {"type": "object", "required": ["purl", "version"]},
+    "package": {
+      "type": "object",
+      "required": ["purl", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "purl": {"type": "string"},
+        "version": {"type": "string"},
+        "affected": {"type": "string", "pattern": "^vers:", "maxLength": 200}
+      }
+    },
     "claim_type": {"type": "string"},
     "summary": {"type": "string", "maxLength": 500},
     "conditions": {"type": "array", "items": {"type": "string"}},

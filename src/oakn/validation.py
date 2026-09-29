@@ -13,6 +13,8 @@ from urllib.parse import urlparse
 import requests
 from defusedxml import ElementTree as element_tree
 
+from .versions import parse_affected
+
 
 class ValidationError(ValueError):
     """A claim or contribution crosses an OAKN trust boundary."""
@@ -217,6 +219,7 @@ class ClaimValidator:
         )
         if claim["package"].get("version") != purl_version:
             raise ValidationError("package.version must exactly match package.purl")
+        self._validate_affected(claim["package"], package_type)
         self._validate_text_safety(claim)
         self._validate_lifecycle(claim)
         self._validate_license(claim)
@@ -225,6 +228,21 @@ class ClaimValidator:
         self._validate_evidence(
             claim, package_type, package_name, purl_version, verify_source_binding
         )
+
+    def _validate_affected(self, package: dict[str, Any], package_type: str) -> None:
+        if not set(package) <= {"purl", "version", "affected"}:
+            raise ValidationError("package may contain only purl, version and affected")
+        affected = package.get("affected")
+        if affected is None:
+            return
+        if not isinstance(affected, str) or len(affected) > 200:
+            raise ValidationError(
+                "package.affected must be a VERS string of at most 200 characters"
+            )
+        try:
+            parse_affected(package_type, affected)
+        except ValueError as error:
+            raise ValidationError(f"package.affected is not a valid VERS range: {error}") from error
 
     def _validate_text_safety(self, claim: dict[str, Any]) -> None:
         for text in _all_strings(claim):

@@ -5,6 +5,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from .versions import applies_to, split_purl
+
 
 class IndexError(ValueError):
     """The local derived index is unavailable or corrupt."""
@@ -25,6 +27,9 @@ def build_index(claims_directory: str | Path, destination: str | Path) -> int:
                 id TEXT PRIMARY KEY,
                 purl TEXT NOT NULL,
                 version TEXT NOT NULL,
+                package TEXT NOT NULL,
+                package_type TEXT NOT NULL,
+                affected TEXT,
                 summary TEXT NOT NULL,
                 evidence_state TEXT NOT NULL,
                 claim_json TEXT NOT NULL
@@ -38,12 +43,16 @@ def build_index(claims_directory: str | Path, destination: str | Path) -> int:
             claim_id = claim["id"]
             summary = claim["summary"]
             evidence_state = claim.get("verification", {}).get("source_binding", "unknown")
+            package_type, package_base, _ = split_purl(package["purl"])
             connection.execute(
-                "INSERT INTO claims VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO claims VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     claim_id,
                     package["purl"],
                     package["version"],
+                    package_base,
+                    package_type,
+                    package.get("affected"),
                     summary,
                     evidence_state,
                     json.dumps(claim, sort_keys=True),
@@ -93,6 +102,15 @@ class ClaimIndex:
             connection.close()
         return int(row[0])
 
+    def _package_rows(self, sql: str, parameters: tuple[Any, ...]) -> list[tuple[Any, ...]]:
+        connection = self._connect()
+        try:
+            return connection.execute(sql, parameters).fetchall()
+        except sqlite3.OperationalError as error:
+            raise IndexError("local index predates version ranges; sync it again") from error
+        finally:
+            connection.close()
+
     def search(
         self,
         query: str,
@@ -101,69 +119,58 @@ class ClaimIndex:
         topic: str | None = None,
         limit: int = 3,
     ) -> list[dict[str, Any]]:
-        """Exact-match a claim by full purl and version before ranking.
+        """Return the best-ranked claims that apply to ``version`` of a package.
 
-        ``purl`` must include the exact version suffix stored on the claim
-        (for example ``pkg:npm/p-limit@4.0.0``), matching ``package.purl`` in
-        the claim JSON. ``version`` is matched separately against
-        ``package.version`` and must agree with the version encoded in
-        ``purl``; passing a bare package purl (``pkg:npm/p-limit``) never
-        matches and looks like a miss.
+        ``purl`` names the package with or without a version suffix
+        (``pkg:npm/p-limit`` or ``pkg:npm/p-limit@4.0.0``); a suffix that
+        disagrees with ``version`` matches nothing. A claim applies when
+        ``version`` is its own version or falls inside its VERS ``affected``
+        range, so a project on a vulnerable version finds the claim recorded
+        against the fixed one. Filtering happens before BM25 ranking.
         """
         text = " ".join(part for part in [query, topic] if part)
         fts_query = _fts_query(text)
-        if not fts_query:
+        package = _package(purl, version)
+        if not fts_query or package is None:
             return []
-        connection = self._connect()
-        try:
-            rows = connection.execute(
-                """
-                SELECT claims.id, claims.summary, claims.purl, claims.version, claims.evidence_state,
-                       bm25(claims_fts) AS rank
-                FROM claims_fts
-                JOIN claims ON claims.id = claims_fts.id
-                WHERE claims_fts MATCH ? AND claims.purl = ? AND claims.version = ?
-                ORDER BY rank ASC, claims.id ASC
-                LIMIT ?
-                """,
-                (fts_query, purl, version, max(1, min(limit, 5))),
-            ).fetchall()
-        finally:
-            connection.close()
-        return [
-            {
-                "claim_id": row[0],
-                "summary": row[1],
-                "package": row[2],
-                "version": row[3],
-                "evidence_state": row[4],
-                "relevance_score": round(-row[5], 6),
-                "untrusted_reference_data": True,
-            }
+        rows = self._package_rows(
+            """
+            SELECT claims.id, claims.summary, claims.purl, claims.version, claims.evidence_state,
+                   claims.package_type, claims.affected, bm25(claims_fts) AS rank
+            FROM claims_fts
+            JOIN claims ON claims.id = claims_fts.id
+            WHERE claims_fts MATCH ? AND claims.package = ?
+            ORDER BY rank ASC, claims.id ASC
+            """,
+            (fts_query, package),
+        )
+        results = [
+            _result(row, version, relevance=round(-row[7], 6))
             for row in rows
+            if applies_to(row[5], row[3], row[6], version)
         ]
+        return results[: max(1, min(limit, 5))]
 
     def package_claims(self, purl: str, version: str, limit: int = 5) -> list[dict[str, Any]]:
-        connection = self._connect()
-        try:
-            rows = connection.execute(
-                "SELECT id, summary, purl, version, evidence_state FROM claims WHERE purl = ? AND version = ? ORDER BY id LIMIT ?",
-                (purl, version, max(1, min(limit, 5))),
-            ).fetchall()
-        finally:
-            connection.close()
-        return [
-            {
-                "claim_id": row[0],
-                "summary": row[1],
-                "package": row[2],
-                "version": row[3],
-                "evidence_state": row[4],
-                "relevance_score": 0.0,
-                "untrusted_reference_data": True,
-            }
-            for row in rows
-        ]
+        """Return claims about the package whatever the query, applying ones first.
+
+        Each result carries ``applies_to_version``; a claim recorded against
+        another version and outside its range is a nearby-version hint, never
+        a hit.
+        """
+        package = _package(purl, version)
+        if package is None:
+            return []
+        rows = self._package_rows(
+            """
+            SELECT id, summary, purl, version, evidence_state, package_type, affected
+            FROM claims WHERE package = ? ORDER BY id
+            """,
+            (package,),
+        )
+        results = [_result(row, version, relevance=0.0) for row in rows]
+        results.sort(key=lambda result: not result["applies_to_version"])
+        return results[: max(1, min(limit, 5))]
 
     def get(self, claim_id: str) -> dict[str, Any] | None:
         connection = self._connect()
@@ -176,3 +183,27 @@ class ClaimIndex:
         if not row:
             return None
         return {"claim": json.loads(row[0]), "untrusted_reference_data": True}
+
+
+def _package(purl: str, version: str) -> str | None:
+    try:
+        _, package, purl_version = split_purl(purl)
+    except ValueError:
+        return None
+    if purl_version is not None and purl_version != version:
+        return None
+    return package
+
+
+def _result(row: tuple[Any, ...], version: str, relevance: float) -> dict[str, Any]:
+    return {
+        "claim_id": row[0],
+        "summary": row[1],
+        "package": row[2],
+        "version": row[3],
+        "affected": row[6],
+        "applies_to_version": applies_to(row[5], row[3], row[6], version),
+        "evidence_state": row[4],
+        "relevance_score": relevance,
+        "untrusted_reference_data": True,
+    }

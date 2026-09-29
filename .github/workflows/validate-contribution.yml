@@ -27,7 +27,7 @@ jobs:
           git worktree add --detach "$RUNNER_TEMP/pull-request" FETCH_HEAD
           git diff --name-status "$BASE_SHA" "$PR_SHA" > "$RUNNER_TEMP/changes.txt"
       - name: Install trusted validator dependencies
-        run: python3 -m pip install 'defusedxml==0.7.1' 'requests==2.34.2'
+        run: python3 -m pip install 'defusedxml==0.7.1' 'requests==2.34.2' 'univers==32.0.1'
       - name: Validate untrusted knowledge contribution as data only
         id: contribution
         run: |

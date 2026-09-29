@@ -77,10 +77,11 @@ def create_mcp_server(
     @server.tool(
         name="search",
         description=(
-            "Search the local verified index for compact claim summaries. "
-            "`purl` must be the full package purl including the exact version "
-            "(e.g. 'pkg:npm/p-limit@4.0.0'), matching `version`; a bare "
-            "package purl without a version never matches."
+            "Search the local verified index for compact claim summaries that apply "
+            "to `version`. `purl` names the package with or without its version "
+            "(e.g. 'pkg:npm/p-limit' or 'pkg:npm/p-limit@4.0.0'); a version suffix "
+            "must equal `version`. A claim applies to its own version and to every "
+            "version in its affected range."
         ),
     )
     def search_tool(

@@ -34,6 +34,24 @@ at your chosen commit actually contains the version string.
   needed on your part beyond picking a real tagged version — just be aware
   the verification path is different from every other ecosystem.
 
+### Declare the affected range for a fix-version claim
+
+The evidence proves one version, usually the fix. Agents search with the
+version their project has, which for a security fix is the vulnerable one.
+Add `package.affected` as a [VERS](https://github.com/package-url/purl-spec/blob/main/VERSION-RANGE-SPEC.rst)
+range in the purl's own scheme, copied from the advisory:
+
+```json
+"package": {
+  "purl": "pkg:maven/org.apache.commons/commons-text@1.10.0",
+  "version": "1.10.0",
+  "affected": "vers:maven/>=1.5|<1.10.0"
+}
+```
+
+Without it, only a project already on 1.10.0 finds the claim. The validator
+rejects a range that does not parse or whose scheme differs from the purl type.
+
 ## 2. Use the live network fetch to compute hashes, not your local clone
 
 The validator's default `fetch` hits `raw.githubusercontent.com` for the
