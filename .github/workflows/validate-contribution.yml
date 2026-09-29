@@ -1,7 +1,6 @@
 name: Validate pull request boundary
 
 on:
-  push:
   pull_request_target:
     types: [opened, synchronize, reopened]
   pull_request_review:
@@ -13,13 +12,7 @@ permissions:
   pull-requests: read
 
 jobs:
-  ignore-push:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Pull-request boundary validation is not run for push events."
   validate:
-    if: github.event_name == 'pull_request_target' || github.event_name == 'pull_request_review'
     runs-on: ubuntu-latest
     steps:
       - name: Fetch trusted validator and pull-request data
