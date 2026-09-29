@@ -27,7 +27,7 @@ def approved_maintainers(
     }
     latest: dict[str, dict[str, Any]] = {}
     for review in reviews:
-        login = review.get("user", {}).get("login")
+        login = (review.get("user") or {}).get("login")
         submitted_at = review.get("submitted_at")
         if login in trusted and isinstance(submitted_at, str):
             previous = latest.get(login)

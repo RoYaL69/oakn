@@ -57,17 +57,31 @@ jobs:
             jq 'add' > "$RUNNER_TEMP/reviews.json"
           jq -r '.[] | select(.user.login != null) | .user.login' "$RUNNER_TEMP/reviews.json" |
             sort -u > "$RUNNER_TEMP/reviewers.txt"
+          : > "$RUNNER_TEMP/permissions.jsonl"
           while IFS= read -r login; do
-            gh api "repos/${REPOSITORY}/collaborators/${login}/permission"
-          done < "$RUNNER_TEMP/reviewers.txt" |
-            jq -s '[.[] | {
+            response=$(curl --silent --show-error --location \
+              --header "Accept: application/vnd.github+json" \
+              --header "Authorization: Bearer ${GH_TOKEN}" \
+              --write-out $'\n%{http_code}' \
+              "https://api.github.com/repos/${REPOSITORY}/collaborators/${login}/permission")
+            status="${response##*$'\n'}"
+            body="${response%$'\n'*}"
+            if [[ "$status" == "404" ]]; then
+              continue
+            elif [[ "$status" != "200" ]]; then
+              printf '%s\n' "$body" >&2
+              exit 1
+            fi
+            printf '%s\n' "$body" >> "$RUNNER_TEMP/permissions.jsonl"
+          done < "$RUNNER_TEMP/reviewers.txt"
+          jq -s '[.[] | {
               login: .user.login,
               permissions: {
                 admin: (.permission == "admin"),
                 maintain: (.permission == "maintain"),
                 push: (.permission == "push" or .permission == "write")
               }
-            }]' > "$RUNNER_TEMP/collaborators.json"
+            }]' "$RUNNER_TEMP/permissions.jsonl" > "$RUNNER_TEMP/collaborators.json"
           python3 "$GITHUB_WORKSPACE/scripts/check_control_plane_approvals.py" \
             --reviews "$RUNNER_TEMP/reviews.json" \
             --collaborators "$RUNNER_TEMP/collaborators.json" \

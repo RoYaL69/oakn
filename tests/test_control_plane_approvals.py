@@ -152,6 +152,37 @@ class ControlPlaneApprovalTests(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
 
+    def test_skips_reviews_without_a_user(self) -> None:
+        result = run_check(
+            [
+                {
+                    "user": None,
+                    "state": "APPROVED",
+                    "commit_id": HEAD,
+                    "submitted_at": "2026-01-01T00:00:00Z",
+                },
+                {
+                    "id": 1,
+                    "user": {"login": "owner"},
+                    "state": "APPROVED",
+                    "commit_id": HEAD,
+                    "submitted_at": "2026-01-01T00:01:00Z",
+                },
+                {
+                    "id": 2,
+                    "user": {"login": "maintainer"},
+                    "state": "APPROVED",
+                    "commit_id": HEAD,
+                    "submitted_at": "2026-01-01T00:02:00Z",
+                },
+            ],
+            [
+                {"login": "owner", "permissions": {"admin": True}},
+                {"login": "maintainer", "permissions": {"maintain": True}},
+            ],
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
