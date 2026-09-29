@@ -1,0 +1,49 @@
+{
+  "claim_type": "DOCUMENTED_BUG",
+  "conditions": [
+    "The package version is exactly 8.10.2.",
+    "This is a fix-version claim: an unrequested WebSocket subprotocol can cause denial of service in undici versions >= 8.0.0 and < 8.10.2, and the issue is fixed starting with this version."
+  ],
+  "evidence": [
+    {
+      "commit_sha": "5e541e0b9df7563e5766bbd469fbfe383d9ae6ca",
+      "content_sha256": "96defe4a46c42666a448e63c3264629e1a16cdc604b78bdfb9ed343dd3829c51",
+      "kind": "git",
+      "package_manifest": {
+        "content_sha256": "d3dc9b2f66b6ea0c406c8305aec87b51e7723c2f0c3c622ccd90d9d056b82464",
+        "path": "package.json"
+      },
+      "path": "lib/web/websocket/connection.js",
+      "repository": "https://github.com/nodejs/undici"
+    }
+  ],
+  "id": "9a9c2a7b-4c4c-4a0e-9d84-2e1a6a0c7f31",
+  "license": {
+    "source_license": "MIT",
+    "verbatim": false
+  },
+  "lifecycle": {
+    "created_at": "2026-09-29",
+    "state": "active"
+  },
+  "package": {
+    "affected": "vers:npm/>=8.0.0|<8.10.2",
+    "purl": "pkg:npm/undici@8.10.2",
+    "version": "8.10.2"
+  },
+  "provenance": {
+    "retrieved_at": "2026-09-29",
+    "source_authority": "official",
+    "source_url": "https://github.com/nodejs/undici/security/advisories/GHSA-rfgv-xxqx-mfg5"
+  },
+  "schema_version": 1,
+  "summary": "undici versions 8.0.0 through 8.10.1 can be forced to process an unrequested WebSocket subprotocol, allowing denial of service. The issue is fixed in 8.10.2 (GHSA-rfgv-xxqx-mfg5).",
+  "verification": {
+    "contradictions": "none_known",
+    "executable_verification": "not_run",
+    "freshness": "current_at_creation",
+    "semantic_support": "asserted",
+    "source_authority": "asserted",
+    "source_binding": "verified"
+  }
+}
