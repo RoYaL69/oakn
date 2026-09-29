@@ -84,6 +84,12 @@ request uses the approval gate described above before trusted tests run, and
 those tests receive no secrets or write tokens. The release job executes only
 merged `main` code.
 
+The boundary workflow is intentionally PR-only. A historical jobless `push`
+run may remain visible in GitHub after a workflow definition was changed; it
+does not represent a failed contribution validation and does not affect the
+required `validate` check. New pushes to `main` are handled by the separate
+index-build workflow.
+
 See `docs/architecture.md` for trust decisions and `docs/agent-rule.md` for the
 agent loop. See `docs/contributing-claims.md` for a practical, ecosystem-by-
 ecosystem walkthrough of what tends to trip people up the first time they
