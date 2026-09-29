@@ -1,6 +1,8 @@
 name: Validate pull request boundary
 
 on:
+  push:
+    branches: ["__never__"]
   pull_request_target:
     types: [opened, synchronize, reopened]
   pull_request_review:
