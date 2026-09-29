@@ -32,7 +32,11 @@ jobs:
       - name: Validate untrusted knowledge contribution as data only
         id: contribution
         run: |
-          if python3 "$GITHUB_WORKSPACE/scripts/validate_contribution.py" "$RUNNER_TEMP/pull-request" --changes "$RUNNER_TEMP/changes.txt"; then
+          set -euo pipefail
+          if [[ "$(wc -l < "$RUNNER_TEMP/changes.txt")" == "1" ]] &&
+             grep -Eq $'^A\tknowledge/claims/[0-9a-f-]{36}\.json$' "$RUNNER_TEMP/changes.txt"; then
+            python3 "$GITHUB_WORKSPACE/scripts/validate_contribution.py" \
+              "$RUNNER_TEMP/pull-request" --changes "$RUNNER_TEMP/changes.txt"
             echo "kind=knowledge" >> "$GITHUB_OUTPUT"
           else
             echo "kind=non-knowledge" >> "$GITHUB_OUTPUT"
@@ -46,16 +50,12 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          curl --fail-with-body --silent --show-error --location \
-            --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${GH_TOKEN}" \
-            "https://api.github.com/repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
-            > "$RUNNER_TEMP/reviews.json"
-          curl --fail-with-body --silent --show-error --location \
-            --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${GH_TOKEN}" \
-            "https://api.github.com/repos/${REPOSITORY}/collaborators?affiliation=all&per_page=100" \
-            > "$RUNNER_TEMP/collaborators.json"
+          gh api --paginate --slurp \
+            "repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" |
+            jq 'add' > "$RUNNER_TEMP/reviews.json"
+          gh api --paginate --slurp \
+            "repos/${REPOSITORY}/collaborators?affiliation=all&per_page=100" |
+            jq 'add' > "$RUNNER_TEMP/collaborators.json"
           python3 "$GITHUB_WORKSPACE/scripts/check_control_plane_approvals.py" \
             --reviews "$RUNNER_TEMP/reviews.json" \
             --collaborators "$RUNNER_TEMP/collaborators.json" \
